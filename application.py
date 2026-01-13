@@ -957,7 +957,7 @@ def get_secret(secret_name, default=None):
     try:
         from google.cloud import secretmanager
         client = secretmanager.SecretManagerServiceClient()
-        project_id = os.getenv('GOOGLE_CLOUD_PROJECT', 'nae-rag')
+        project_id = os.getenv('GOOGLE_CLOUD_PROJECT', 'zeta-bonfire-476018-u6')
         name = f"projects/{project_id}/secrets/{secret_name}/versions/latest"
         response = client.access_secret_version(request={"name": name})
         return response.payload.data.decode('UTF-8')

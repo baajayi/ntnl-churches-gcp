@@ -6,10 +6,10 @@ on:
   workflow_dispatch:
 
 env:
-  PROJECT_ID: nae-rag
+  PROJECT_ID: zeta-bonfire-476018-u6
   REGION: us-central1
   SERVICE_NAME: ntnl-churches
-  REGISTRY: us-central1-docker.pkg.dev/nae-rag/ntnl-churches
+  REGISTRY: us-central1-docker.pkg.dev/zeta-bonfire-476018-u6/ntnl-churches
 
 jobs:
   deploy:
@@ -52,7 +52,7 @@ jobs:
             --image=${{ env.REGISTRY }}/${{ env.SERVICE_NAME }}:${{ github.sha }} \
             --region=${{ env.REGION }} \
             --platform=managed \
-            --service-account=ntnl-churches-runtime@nae-rag.iam.gserviceaccount.com \
+            --service-account=ntnl-churches-runtime@zeta-bonfire-476018-u6.iam.gserviceaccount.com \
             --allow-unauthenticated \
             --port=8080 \
             --memory=512Mi \
@@ -61,7 +61,7 @@ jobs:
             --min-instances=0 \
             --max-instances=10 \
             --timeout=120s \
-            --set-env-vars="FLASK_ENV=production,CACHE_TYPE=memory,CACHE_MAX_SIZE=1000,CACHE_TTL=3600,GCS_LOGS_BUCKET=ntnl-churches-logs,PINECONE_INDEX_NAME=multitenant-rag,PINECONE_ENVIRONMENT=us-east-1,GOOGLE_CLOUD_PROJECT=nae-rag,PORT=8080,OPENAI_EMBEDDING_MODEL=text-embedding-3-large,OPENAI_CHAT_MODEL=gpt-4o-mini" \
+            --set-env-vars="FLASK_ENV=production,CACHE_TYPE=memory,CACHE_MAX_SIZE=1000,CACHE_TTL=3600,GCS_LOGS_BUCKET=ntnl-churches-logs,PINECONE_INDEX_NAME=multitenant-rag,PINECONE_ENVIRONMENT=us-east-1,GOOGLE_CLOUD_PROJECT=zeta-bonfire-476018-u6,PORT=8080,OPENAI_EMBEDDING_MODEL=text-embedding-3-large,OPENAI_CHAT_MODEL=gpt-4o-mini" \
             --set-secrets="OPENAI_API_KEY=OPENAI_API_KEY:latest,PINECONE_API_KEY=PINECONE_API_KEY:latest,DISCORD_TOKEN=DISCORD_TOKEN:latest,CHATBOT_API_KEY=CHATBOT_API_KEY:latest"
 
       - name: Get Service URL

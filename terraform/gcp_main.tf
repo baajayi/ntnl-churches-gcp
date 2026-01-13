@@ -16,7 +16,7 @@ provider "google" {
 variable "project_id" {
   description = "GCP Project ID"
   type        = string
-  default     = "nae-rag"
+  default     = "zeta-bonfire-476018-u6"
 }
 
 variable "region" {
