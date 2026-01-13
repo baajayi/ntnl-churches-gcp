@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ECIC - Policy Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .chat-section {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .chat-section h2 {
+            color: #1e3a8a;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #3b82f6;
+        }
+
+        .note {
+            background-color: #dbeafe;
+            border-left: 4px solid #3b82f6;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+            color: #1e3a8a;
+        }
+
+        .warning {
+            background-color: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+            color: #92400e;
+        }
+
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            height: 500px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background-color: #f9fafb;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            padding: 12px 16px;
+            border-radius: 8px;
+            max-width: 80%;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.user {
+            background-color: #3b82f6;
+            color: white;
+            margin-left: auto;
+            text-align: right;
+        }
+
+        .message.assistant {
+            background-color: white;
+            border: 1px solid #e5e7eb;
+            line-height: 1.6;
+        }
+
+        .message.error {
+            background-color: #fee2e2;
+            border: 1px solid #ef4444;
+            color: #991b1b;
+        }
+
+        .message.sources {
+            background-color: #f0f9ff;
+            border: 1px solid #0ea5e9;
+            font-size: 13px;
+            max-width: 80%;
+        }
+
+        .message.sources strong {
+            color: #0c4a6e;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .source-item {
+            padding: 6px 0;
+            border-bottom: 1px solid #e0f2fe;
+        }
+
+        .source-item:last-child {
+            border-bottom: none;
+        }
+
+        .input-area {
+            display: flex;
+            padding: 20px;
+            background-color: white;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        #userInput {
+            flex: 1;
+            padding: 12px 16px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        #userInput:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        #sendBtn {
+            margin-left: 10px;
+            padding: 12px 24px;
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        #sendBtn:hover:not(:disabled) {
+            background-color: #2563eb;
+        }
+
+        #sendBtn:disabled {
+            background-color: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .status {
+            text-align: center;
+            padding: 10px;
+            font-size: 12px;
+            color: #6b7280;
+        }
+
+        .status.connected {
+            color: #059669;
+        }
+
+        .status.error {
+            color: #dc2626;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.8rem;
+            }
+
+            .chat-container {
+                height: 400px;
+            }
+
+            .message {
+                max-width: 90%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📋 ECIC Policy Assistant</h1>
+
+        <div class="chat-section">
+            <h2>Company Policies & Procedures</h2>
+            <div class="note">
+                This assistant provides accurate information from ECIC company policy documents.
+                All responses are based strictly on official policy documentation.
+            </div>
+            <div class="warning">
+                <strong>Note:</strong> This assistant only provides information from ingested policy documents.
+                Responses include direct citations from source documents for verification.
+            </div>
+
+            <div id="status" class="status">Ready to assist</div>
+
+            <div class="chat-container">
+                <div id="messages" class="messages">
+                    <div class="message assistant">
+                        👋 Hello! I'm the ECIC Policy Assistant. I can help you find specific information from company policies and procedures. My responses are based solely on official policy documents and include citations. What would you like to know?
+                    </div>
+                </div>
+
+                <div class="input-area">
+                    <input
+                        type="text"
+                        id="userInput"
+                        placeholder="Ask about a company policy..."
+                        autocomplete="off"
+                    >
+                    <button id="sendBtn">Send</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const messagesDiv = document.getElementById('messages');
+        const userInput = document.getElementById('userInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const statusDiv = document.getElementById('status');
+
+        let conversationHistory = [];
+
+        // API Configuration
+        const API_URL = window.location.origin + '/query';
+        const TENANT_ID = 'ecic-policies';
+
+        function addMessage(content, type = 'assistant') {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+
+            // Preserve formatting for policy content
+            if (type === 'assistant' || type === 'error') {
+                messageDiv.innerHTML = content.replace(/\n/g, '<br>');
+            } else {
+                messageDiv.textContent = content;
+            }
+
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function addSourcesDisplay(sources) {
+            if (!sources || sources.length === 0) return;
+
+            const sourcesDiv = document.createElement('div');
+            sourcesDiv.className = 'message sources';
+
+            let sourcesHTML = '<strong>📚 Source Documents:</strong>';
+            sources.forEach((source, index) => {
+                const filename = source.metadata?.filename || source.metadata?.source || 'Unknown';
+                const namespace = source.metadata?.namespace || 'N/A';
+                const score = source.score ? ` (${(source.score * 100).toFixed(1)}% match)` : '';
+
+                sourcesHTML += `<div class="source-item">${index + 1}. ${filename}${score}</div>`;
+            });
+
+            sourcesDiv.innerHTML = sourcesHTML;
+            messagesDiv.appendChild(sourcesDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function setStatus(message, className = '') {
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${className}`;
+        }
+
+        async function sendMessage() {
+            const query = userInput.value.trim();
+            if (!query) return;
+
+            // Add user message to UI
+            addMessage(query, 'user');
+            userInput.value = '';
+            sendBtn.disabled = true;
+            setStatus('Searching policies...', 'connected');
+
+            // Add to conversation history
+            conversationHistory.push({
+                role: 'user',
+                content: query
+            });
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Tenant-ID': TENANT_ID
+                    },
+                    body: JSON.stringify({
+                        query: query,
+                        conversation_history: conversationHistory
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    const answer = data.answer || 'I received your question but have no response.';
+                    addMessage(answer, 'assistant');
+
+                    // Add assistant response to conversation history
+                    conversationHistory.push({
+                        role: 'assistant',
+                        content: answer
+                    });
+
+                    // Show sources prominently for policy queries
+                    if (data.sources && data.sources.length > 0) {
+                        addSourcesDisplay(data.sources);
+                    }
+
+                    setStatus('Ready to assist', 'connected');
+                } else {
+                    const errorMsg = data.message || data.error || 'An error occurred';
+                    addMessage(`Error: ${errorMsg}`, 'error');
+                    setStatus('Error occurred', 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                addMessage(`Connection error: ${error.message}`, 'error');
+                setStatus('Connection error', 'error');
+            } finally {
+                sendBtn.disabled = false;
+                userInput.focus();
+            }
+        }
+
+        // Event listeners
+        sendBtn.addEventListener('click', sendMessage);
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        // Test connection on load
+        window.addEventListener('load', async () => {
+            try {
+                const response = await fetch(window.location.origin + '/health', {
+                    headers: {
+                        'X-Tenant-ID': TENANT_ID
+                    }
+                });
+                const data = await response.json();
+                if (data.status === 'healthy' && data.tenant) {
+                    setStatus(`Connected to ${data.tenant.name}`, 'connected');
+                } else {
+                    setStatus('Connected, but tenant not verified', 'error');
+                }
+            } catch (error) {
+                setStatus('Could not verify connection', 'error');
+                console.error('Connection test failed:', error);
+            }
+        });
+
+        // Focus input on load
+        userInput.focus();
+    </script>
+</body>
+</html>

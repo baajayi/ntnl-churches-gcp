@@ -1,0 +1,107 @@
+name: Deploy to AWS Elastic Beanstalk
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+
+    env:
+      EB_APP: ${{ secrets.EB_APPLICATION_NAME }}
+      EB_ENV: ${{ secrets.EB_ENVIRONMENT_NAME }}
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+
+      - name: Install EB CLI
+        run: |
+          python -m pip install --upgrade pip
+          pip install --upgrade awsebcli
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Compute version label
+        id: ver
+        run: |
+          ts=$(date +'%Y%m%d-%H%M%S')
+          short_sha=${GITHUB_SHA::7}
+          echo "label=github-${short_sha}-${ts}" >> "$GITHUB_OUTPUT"
+
+      - name: Initialize EB (non-interactive) & select env
+        run: |
+          # If config folder doesn't exist, initialize.
+          if [ ! -d .elasticbeanstalk ]; then
+            eb init "$EB_APP" \
+              --platform "Python 3.11 running on 64bit Amazon Linux 2023" \
+              --region "$AWS_REGION"
+          fi
+          # Make sure the CLI targets the right environment
+          eb use "$EB_ENV"
+
+      - name: Deploy to Elastic Beanstalk
+        run: |
+          # Create new version with label and message
+          eb deploy "$EB_ENV" \
+            --label "${{ steps.ver.outputs.label }}" \
+            --message "Deploy from GitHub $GITHUB_SHA" \
+            --timeout 20
+
+      - name: Verify deployment
+        run: |
+          # Ask EB for health; --refresh waits/polls
+          eb health "$EB_ENV" --refresh
+
+          # Fetch CNAME via AWS CLI (more reliable than parsing eb status)
+          URL=$(aws elasticbeanstalk describe-environments \
+            --environment-names "$EB_ENV" \
+            --query 'Environments[0].CNAME' \
+            --output text)
+          echo "Application CNAME: $URL"
+
+          # Simple health check loop
+          for i in {1..10}; do
+            if curl -fsS "http://${URL}/health" > /dev/null; then
+              echo "Health check passed!"
+              exit 0
+            fi
+            echo "Waiting for application to be ready... (attempt $i/10)"
+            sleep 10
+          done
+
+          echo "Health check failed after 10 attempts"
+          exit 1
+
+      - name: Rollback hint on failure
+        if: failure()
+        run: |
+          echo "❌ Deployment failed. Check recent EB events and consider rolling back to a previous version."
+          eb events "$EB_ENV"
+
+      - name: Notify deployment status
+        if: always()
+        run: |
+          if [ "${{ job.status }}" = "success" ]; then
+            echo "✅ Deployment successful: ${{ steps.ver.outputs.label }}"
+          else
+            echo "❌ Deployment failed."
+          fi

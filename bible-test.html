@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bible Namespace Test - NLT</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .status.pending {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            color: #856404;
+        }
+
+        .status.success {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+            color: #155724;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+            color: #721c24;
+        }
+
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .test-section h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .query-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            margin-bottom: 10px;
+            transition: border-color 0.3s;
+        }
+
+        .query-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-weight: 600;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .response {
+            margin-top: 20px;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .response h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .verse {
+            padding: 15px;
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            margin-bottom: 15px;
+            border-radius: 4px;
+        }
+
+        .verse-ref {
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 8px;
+        }
+
+        .verse-text {
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .metadata {
+            font-size: 0.85em;
+            color: #666;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid #ddd;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #667eea;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .quick-queries {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .quick-query-btn {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .quick-query-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 0.9em;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📖 Bible Namespace Test</h1>
+            <p>New Living Translation (NLT) - Pinecone RAG</p>
+        </div>
+
+        <div class="content">
+            <div id="status" class="status pending">
+                Waiting to test Bible namespace...
+            </div>
+
+            <div class="test-section">
+                <h2>Health Check</h2>
+                <button class="btn" onclick="testHealth()">Check Bible Namespace Health</button>
+                <div id="health-response"></div>
+            </div>
+
+            <div class="test-section">
+                <h2>Search Bible Verses</h2>
+                <input
+                    type="text"
+                    id="query-input"
+                    class="query-input"
+                    placeholder="Ask a question about scripture (e.g., 'What does the Bible say about love?')"
+                    onkeypress="if(event.key === 'Enter') searchBible()"
+                />
+                <button class="btn" onclick="searchBible()">Search Scripture</button>
+
+                <div class="quick-queries">
+                    <button class="quick-query-btn" onclick="quickQuery('What does the Bible say about love?')">Love</button>
+                    <button class="quick-query-btn" onclick="quickQuery('What does the Bible say about faith?')">Faith</button>
+                    <button class="quick-query-btn" onclick="quickQuery('Genesis creation story')">Creation</button>
+                    <button class="quick-query-btn" onclick="quickQuery('John 3:16')">John 3:16</button>
+                    <button class="quick-query-btn" onclick="quickQuery('Psalm 23')">Psalm 23</button>
+                    <button class="quick-query-btn" onclick="quickQuery('What does the Bible say about hope?')">Hope</button>
+                </div>
+
+                <div id="query-response"></div>
+            </div>
+
+            <div class="test-section">
+                <h2>Multi-Namespace Test (NTNL + Bible)</h2>
+                <p style="color: #666; margin-bottom: 10px;">
+                    This tests if the NTNL tenant can access both Lutheran content and Bible verses.
+                </p>
+                <input
+                    type="text"
+                    id="ntnl-query-input"
+                    class="query-input"
+                    placeholder="Ask a theological question (e.g., 'What does scripture say about grace?')"
+                    onkeypress="if(event.key === 'Enter') searchNTNL()"
+                />
+                <button class="btn" onclick="searchNTNL()">Search NTNL (Lutheran + Bible)</button>
+                <div id="ntnl-response"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin;
+
+        async function testHealth() {
+            const statusDiv = document.getElementById('status');
+            const responseDiv = document.getElementById('health-response');
+
+            statusDiv.className = 'status pending';
+            statusDiv.textContent = 'Testing Bible namespace health...';
+            responseDiv.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+
+            try {
+                const response = await fetch(`${API_BASE}/health`, {
+                    method: 'GET',
+                    headers: {
+                        'X-Tenant-ID': 'bible'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.status === 'healthy') {
+                    statusDiv.className = 'status success';
+                    statusDiv.textContent = '✓ Bible namespace is healthy!';
+                    responseDiv.innerHTML = `
+                        <div class="response">
+                            <h3>Health Check Response</h3>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                } else {
+                    throw new Error(data.message || 'Health check failed');
+                }
+            } catch (error) {
+                statusDiv.className = 'status error';
+                statusDiv.textContent = '✗ Bible namespace health check failed: ' + error.message;
+                responseDiv.innerHTML = `
+                    <div class="response">
+                        <h3>Error</h3>
+                        <p style="color: #dc3545;">${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function searchBible() {
+            const query = document.getElementById('query-input').value.trim();
+            if (!query) {
+                alert('Please enter a query');
+                return;
+            }
+
+            const responseDiv = document.getElementById('query-response');
+            responseDiv.innerHTML = '<div class="loading"><div class="spinner"></div><p>Searching scripture...</p></div>';
+
+            try {
+                const response = await fetch(`${API_BASE}/query`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Tenant-ID': 'bible'
+                    },
+                    body: JSON.stringify({
+                        query: query,
+                        top_k: 5
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    displayResults(responseDiv, data);
+                } else {
+                    throw new Error(data.error || 'Query failed');
+                }
+            } catch (error) {
+                responseDiv.innerHTML = `
+                    <div class="response">
+                        <h3>Error</h3>
+                        <p style="color: #dc3545;">${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function searchNTNL() {
+            const query = document.getElementById('ntnl-query-input').value.trim();
+            if (!query) {
+                alert('Please enter a query');
+                return;
+            }
+
+            const responseDiv = document.getElementById('ntnl-response');
+            responseDiv.innerHTML = '<div class="loading"><div class="spinner"></div><p>Searching NTNL resources...</p></div>';
+
+            try {
+                const response = await fetch(`${API_BASE}/query`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Tenant-ID': 'ntnl'
+                    },
+                    body: JSON.stringify({
+                        query: query,
+                        top_k: 5
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    displayResults(responseDiv, data, true);
+                } else {
+                    throw new Error(data.error || 'Query failed');
+                }
+            } catch (error) {
+                responseDiv.innerHTML = `
+                    <div class="response">
+                        <h3>Error</h3>
+                        <p style="color: #dc3545;">${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        function displayResults(container, data, showNamespaces = false) {
+            let html = `
+                <div class="response">
+                    <h3>AI Response</h3>
+                    <div class="verse">
+                        <div class="verse-text">${data.response}</div>
+                    </div>
+            `;
+
+            if (data.sources && data.sources.length > 0) {
+                html += '<h3>Source Verses</h3>';
+                data.sources.forEach(source => {
+                    const metadata = source.metadata || {};
+                    const reference = metadata.reference || `${metadata.book} ${metadata.chapter}:${metadata.verse}`;
+                    const testament = metadata.testament || '';
+                    const namespace = metadata.namespace || 'unknown';
+
+                    html += `
+                        <div class="verse">
+                            <div class="verse-ref">${reference}</div>
+                            <div class="verse-text">"${source.text}"</div>
+                            <div class="metadata">
+                                ${testament} • ${metadata.version || 'NLT'}
+                                ${showNamespaces ? ` • Namespace: ${namespace}` : ''}
+                                • Score: ${source.score?.toFixed(3) || 'N/A'}
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            if (showNamespaces && data.namespaces_searched) {
+                html += `
+                    <div class="metadata" style="margin-top: 15px; padding: 10px; background: #e7f3ff; border-radius: 4px;">
+                        <strong>Namespaces Searched:</strong> ${data.namespaces_searched.join(', ')}
+                    </div>
+                `;
+            }
+
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        function quickQuery(query) {
+            document.getElementById('query-input').value = query;
+            searchBible();
+        }
+
+        // Auto-test on load
+        window.addEventListener('load', () => {
+            setTimeout(testHealth, 500);
+        });
+    </script>
+</body>
+</html>

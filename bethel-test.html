@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bethel Lutheran Church - Widget Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .widget-section {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .widget-section h2 {
+            color: #f5576c;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #f5576c;
+        }
+
+        .note {
+            background-color: #f8d7da;
+            border-left: 4px solid #721c24;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+            color: #721c24;
+        }
+
+        .chat-container {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        button {
+            padding: 12px 24px;
+            background: #f5576c;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background: #d4465a;
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .messages {
+            max-height: 500px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            padding: 12px;
+            border-radius: 8px;
+        }
+
+        .user-message {
+            background: #ffe0e6;
+            margin-left: 20%;
+        }
+
+        .assistant-message {
+            background: #f5f5f5;
+            margin-right: 20%;
+        }
+
+        .message-label {
+            font-weight: 600;
+            margin-bottom: 5px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>✝️ Bethel Lutheran Church - AI Assistant Test</h1>
+
+        <div class="widget-section">
+            <h2>Chat Widget Test</h2>
+            <div class="note">
+                Test the Bethel Lutheran AI assistant below. This chat interface connects to the /rag-query endpoint with the 'bethel' tenant ID.
+            </div>
+
+            <div class="chat-container">
+                <div class="input-group">
+                    <input
+                        type="text"
+                        id="queryInput"
+                        placeholder="Ask a question about Lutheran theology, ELCA values, or scripture..."
+                        onkeypress="if(event.key === 'Enter') sendQuery()"
+                    />
+                    <button onclick="sendQuery()" id="sendBtn">Send</button>
+                </div>
+
+                <div id="messages" class="messages"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let conversationHistory = [];
+        const API_URL = window.location.origin + '/rag-query';
+        const TENANT_ID = 'bethel';
+
+        async function sendQuery() {
+            const input = document.getElementById('queryInput');
+            const messagesDiv = document.getElementById('messages');
+            const sendBtn = document.getElementById('sendBtn');
+            const query = input.value.trim();
+
+            if (!query) return;
+
+            // Disable input
+            sendBtn.disabled = true;
+            input.disabled = true;
+
+            // Add user message to UI
+            appendMessage('user', query);
+            input.value = '';
+
+            // Show loading
+            const loadingId = 'loading-' + Date.now();
+            messagesDiv.innerHTML += `<div id="${loadingId}" class="loading">Thinking...</div>`;
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Tenant-ID': TENANT_ID
+                    },
+                    body: JSON.stringify({
+                        query: query,
+                        conversation_history: conversationHistory
+                    })
+                });
+
+                const data = await response.json();
+
+                // Remove loading
+                document.getElementById(loadingId)?.remove();
+
+                if (data.success && data.answer) {
+                    const answer = data.answer;
+                    appendMessage('assistant', answer);
+
+                    // Update conversation history
+                    conversationHistory.push({role: 'user', content: query});
+                    conversationHistory.push({role: 'assistant', content: answer});
+                } else {
+                    appendMessage('assistant', 'Sorry, I encountered an error: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                document.getElementById(loadingId)?.remove();
+                appendMessage('assistant', 'Sorry, I encountered a network error: ' + error.message);
+            }
+
+            // Re-enable input
+            sendBtn.disabled = false;
+            input.disabled = false;
+            input.focus();
+        }
+
+        function appendMessage(role, content) {
+            const messagesDiv = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message ' + (role === 'user' ? 'user-message' : 'assistant-message');
+
+            const label = document.createElement('div');
+            label.className = 'message-label';
+            label.textContent = role === 'user' ? 'You' : 'Bethel Assistant';
+
+            const text = document.createElement('div');
+            text.textContent = content;
+
+            messageDiv.appendChild(label);
+            messageDiv.appendChild(text);
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        // Focus input on load
+        document.getElementById('queryInput').focus();
+    </script>
+</body>
+</html>

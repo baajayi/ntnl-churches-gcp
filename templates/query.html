@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAG Query Interface</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 2rem;
+        }
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+        }
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        .main-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        .tenant-selector {
+            margin-bottom: 1.5rem;
+        }
+        .tenant-selector label {
+            display: block;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+        }
+        .tenant-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+        .tenant-btn {
+            padding: 1rem;
+            border: 2px solid #e0e0e0;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+        }
+        .tenant-btn:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+        }
+        .tenant-btn.active {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+        .tenant-btn h3 {
+            color: #333;
+            font-size: 1rem;
+            margin-bottom: 0.25rem;
+        }
+        .tenant-btn p {
+            color: #666;
+            font-size: 0.85rem;
+        }
+        .query-section {
+            margin-bottom: 1.5rem;
+        }
+        .query-section label {
+            display: block;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+        }
+        textarea {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 1rem;
+            resize: vertical;
+            transition: border-color 0.2s;
+        }
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .advanced-options {
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        .advanced-options summary {
+            cursor: pointer;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 1rem;
+        }
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        .option-field {
+            display: flex;
+            flex-direction: column;
+        }
+        .option-field label {
+            font-size: 0.85rem;
+            color: #666;
+            margin-bottom: 0.25rem;
+        }
+        .option-field input {
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+        .btn-primary {
+            width: 100%;
+            padding: 1rem 2rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .response-section {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            display: none;
+        }
+        .response-section.visible {
+            display: block;
+        }
+        .response-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        .response-header h2 {
+            color: #333;
+            font-size: 1.5rem;
+        }
+        .clear-btn {
+            padding: 0.5rem 1rem;
+            background: #f0f0f0;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background 0.2s;
+        }
+        .clear-btn:hover {
+            background: #e0e0e0;
+        }
+        .answer {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+            color: #333;
+        }
+        .sources {
+            margin-top: 1.5rem;
+        }
+        .sources h3 {
+            color: #333;
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+        }
+        .source-item {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 0.75rem;
+            border-left: 4px solid #667eea;
+        }
+        .source-item .source-text {
+            color: #555;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+        .source-item .source-meta {
+            color: #999;
+            font-size: 0.8rem;
+        }
+        .metadata {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background: #f0f4ff;
+            border-radius: 6px;
+            font-size: 0.85rem;
+        }
+        .metadata h4 {
+            color: #667eea;
+            margin-bottom: 0.5rem;
+        }
+        .metadata-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 0.5rem;
+        }
+        .metadata-item {
+            color: #666;
+        }
+        .metadata-item strong {
+            color: #333;
+        }
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            border-left: 4px solid #c33;
+        }
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #667eea;
+        }
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .conversation-history {
+            margin-bottom: 1.5rem;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 1rem;
+        }
+        .conversation-item {
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .conversation-item:last-child {
+            border-bottom: none;
+        }
+        .conversation-item .question {
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 0.5rem;
+        }
+        .conversation-item .answer {
+            margin: 0;
+            padding: 0.75rem;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>RAG Query Interface</h1>
+            <p>Ask questions and get AI-powered answers from your knowledge base</p>
+        </div>
+
+        <div class="main-card">
+            <div class="tenant-selector">
+                <label>Select Tenant</label>
+                <div class="tenant-buttons">
+                    <div class="tenant-btn active" data-tenant="ntnl">
+                        <h3>NTNL</h3>
+                        <p>Northern Texas-Northern Louisiana</p>
+                    </div>
+                    <div class="tenant-btn" data-tenant="cts">
+                        <h3>Christ the Servant</h3>
+                        <p>Lutheran Church - Allen, TX</p>
+                    </div>
+                    <div class="tenant-btn" data-tenant="demo">
+                        <h3>Demo</h3>
+                        <p>Demo tenant for testing</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="conversation-history" id="conversationHistory" style="display: none;">
+                <!-- Conversation history will be inserted here -->
+            </div>
+
+            <div class="query-section">
+                <label for="queryInput">Your Question</label>
+                <textarea
+                    id="queryInput"
+                    rows="4"
+                    placeholder="Type your question here..."
+                ></textarea>
+            </div>
+
+            <details class="advanced-options">
+                <summary>Advanced Options</summary>
+                <div class="options-grid">
+                    <div class="option-field">
+                        <label for="topK">Number of Results (top_k)</label>
+                        <input type="number" id="topK" min="1" max="20" value="5">
+                    </div>
+                    <div class="option-field">
+                        <label for="temperature">Temperature</label>
+                        <input type="number" id="temperature" min="0" max="1" step="0.1" value="0.0">
+                    </div>
+                    <div class="option-field">
+                        <label for="maxTokens">Max Tokens</label>
+                        <input type="number" id="maxTokens" min="100" max="4000" step="100" value="1000">
+                    </div>
+                </div>
+            </details>
+
+            <button class="btn-primary" id="submitBtn" onclick="submitQuery()">
+                Ask Question
+            </button>
+        </div>
+
+        <div class="response-section" id="responseSection">
+            <div class="response-header">
+                <h2>Response</h2>
+                <button class="clear-btn" onclick="clearConversation()">Clear Conversation</button>
+            </div>
+            <div id="responseContent">
+                <!-- Response will be inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedTenant = 'ntnl';
+        let conversationHistory = [];
+
+        // Tenant selection
+        document.querySelectorAll('.tenant-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tenant-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                selectedTenant = btn.dataset.tenant;
+                clearConversation();
+            });
+        });
+
+        // Enter key to submit
+        document.getElementById('queryInput').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && e.ctrlKey) {
+                submitQuery();
+            }
+        });
+
+        async function submitQuery() {
+            const query = document.getElementById('queryInput').value.trim();
+
+            if (!query) {
+                alert('Please enter a question');
+                return;
+            }
+
+            const submitBtn = document.getElementById('submitBtn');
+            const responseSection = document.getElementById('responseSection');
+            const responseContent = document.getElementById('responseContent');
+
+            // Show loading state
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Processing...';
+            responseSection.classList.add('visible');
+            responseContent.innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Searching knowledge base and generating answer...</p>
+                </div>
+            `;
+
+            try {
+                const topK = parseInt(document.getElementById('topK').value);
+                const temperature = parseFloat(document.getElementById('temperature').value);
+                const maxTokens = parseInt(document.getElementById('maxTokens').value);
+
+                // Prepare conversation history for context-aware responses
+                const historyForAPI = conversationHistory.map(item => ({
+                    query: item.question,
+                    answer: item.answer
+                }));
+
+                const response = await fetch('/rag-query', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Tenant-ID': selectedTenant
+                    },
+                    body: JSON.stringify({
+                        query,
+                        top_k: topK,
+                        temperature: temperature,
+                        max_tokens: maxTokens,
+                        conversation_history: historyForAPI
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    displayResponse(query, data);
+                    // Clear input for next question
+                    document.getElementById('queryInput').value = '';
+                } else {
+                    responseContent.innerHTML = `
+                        <div class="error">
+                            <strong>Error:</strong> ${data.error || 'An error occurred'}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                responseContent.innerHTML = `
+                    <div class="error">
+                        <strong>Error:</strong> ${error.message}
+                    </div>
+                `;
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Ask Question';
+            }
+        }
+
+        function displayResponse(query, data) {
+            const responseContent = document.getElementById('responseContent');
+
+            // Add to conversation history
+            conversationHistory.push({
+                question: query,
+                answer: data.answer,
+                timestamp: new Date().toISOString()
+            });
+
+            // Update conversation history display
+            updateConversationHistory();
+
+            // Display current response
+            let html = `
+                <div class="answer">
+                    ${formatAnswer(data.answer)}
+                </div>
+            `;
+
+            // Add sources if available
+            if (data.sources && data.sources.length > 0) {
+                html += `
+                    <div class="sources">
+                        <h3>Sources (${data.sources.length})</h3>
+                `;
+
+                data.sources.forEach((source, idx) => {
+                    const namespace = source.namespace || 'N/A';
+                    const sourceFile = source.metadata?.source || source.metadata?.filename || 'Unknown';
+                    const textSnippet = source.metadata?.text_snippet || source.text || '';
+                    const score = source.score ? source.score.toFixed(4) : 'N/A';
+
+                    // Fusion details
+                    const fusionDetails = source.fusion_details || {};
+                    const inDense = fusionDetails.in_dense ? '✓ Semantic' : '';
+                    const inSparse = fusionDetails.in_sparse ? '✓ Keyword' : '';
+                    const sources = [inDense, inSparse].filter(x => x).join(' + ') || 'Unknown';
+
+                    const denseScore = source.dense_score ? ` | Dense: ${source.dense_score.toFixed(4)}` : '';
+                    const sparseScore = source.sparse_score ? ` | Sparse: ${source.sparse_score.toFixed(4)}` : '';
+
+                    html += `
+                        <div class="source-item">
+                            <div class="source-text"><strong>${idx + 1}. ${escapeHtml(sourceFile)}</strong></div>
+                            <div class="source-text" style="margin-top: 8px; font-size: 0.85rem;">${escapeHtml(textSnippet.substring(0, 200))}${textSnippet.length > 200 ? '...' : ''}</div>
+                            <div class="source-meta">
+                                Namespace: <strong>${namespace}</strong> |
+                                Score: ${score} |
+                                Sources: ${sources}
+                                ${denseScore}${sparseScore}
+                            </div>
+                        </div>
+                    `;
+                });
+
+                html += `</div>`;
+            }
+
+            // Add metadata
+            if (data.metadata) {
+                const searchType = data.metadata.search_type || 'N/A';
+                const hybridEnabled = data.metadata.hybrid_enabled !== undefined ? (data.metadata.hybrid_enabled ? 'Yes' : 'No') : 'N/A';
+                const fusionMethod = data.metadata.fusion_method || 'N/A';
+                const alpha = data.metadata.alpha !== undefined ? data.metadata.alpha : 'N/A';
+                const namespaces = data.metadata.namespaces_searched ? data.metadata.namespaces_searched.join(', ') : 'N/A';
+
+                html += `
+                    <div class="metadata">
+                        <h4>Query Information</h4>
+                        <div class="metadata-grid">
+                            <div class="metadata-item"><strong>Search Type:</strong> ${searchType}</div>
+                            ${data.metadata.query_time ? `<div class="metadata-item"><strong>Response Time:</strong> ${data.metadata.query_time}s</div>` : ''}
+                            ${data.metadata.latency_ms ? `<div class="metadata-item"><strong>Latency:</strong> ${data.metadata.latency_ms}ms</div>` : ''}
+                            <div class="metadata-item"><strong>Hybrid Search:</strong> ${hybridEnabled}</div>
+                            ${hybridEnabled === 'Yes' ? `<div class="metadata-item"><strong>Fusion Method:</strong> ${fusionMethod}</div>` : ''}
+                            ${hybridEnabled === 'Yes' && alpha !== 'N/A' ? `<div class="metadata-item"><strong>Alpha (Dense Weight):</strong> ${alpha}</div>` : ''}
+                            <div class="metadata-item"><strong>Namespaces:</strong> ${namespaces}</div>
+                            ${data.metadata.tokens ? `<div class="metadata-item"><strong>Tokens:</strong> ${data.metadata.tokens.total || data.metadata.tokens_used}</div>` : ''}
+                            ${data.metadata.cache_hit !== undefined ? `<div class="metadata-item"><strong>Cache:</strong> ${data.metadata.cache_hit ? 'Hit' : 'Miss'}</div>` : ''}
+                            ${data.cached !== undefined ? `<div class="metadata-item"><strong>Cached:</strong> ${data.cached ? 'Yes' : 'No'}</div>` : ''}
+                            ${data.metadata.model ? `<div class="metadata-item"><strong>Model:</strong> ${data.metadata.model}</div>` : ''}
+                            ${data.metadata.context_chunks ? `<div class="metadata-item"><strong>Context Chunks:</strong> ${data.metadata.context_chunks}</div>` : ''}
+                        </div>
+                    </div>
+                `;
+            }
+
+            responseContent.innerHTML = html;
+        }
+
+        function updateConversationHistory() {
+            const historyEl = document.getElementById('conversationHistory');
+
+            if (conversationHistory.length === 0) {
+                historyEl.style.display = 'none';
+                return;
+            }
+
+            historyEl.style.display = 'block';
+            historyEl.innerHTML = conversationHistory.map((item, idx) => `
+                <div class="conversation-item">
+                    <div class="question">Q${idx + 1}: ${escapeHtml(item.question)}</div>
+                    <div class="answer">${formatAnswer(item.answer)}</div>
+                </div>
+            `).join('');
+
+            // Scroll to bottom
+            historyEl.scrollTop = historyEl.scrollHeight;
+        }
+
+        function clearConversation() {
+            conversationHistory = [];
+            updateConversationHistory();
+            document.getElementById('responseSection').classList.remove('visible');
+        }
+
+        function formatAnswer(text) {
+            // Simple formatting: preserve line breaks and add basic styling
+            return escapeHtml(text)
+                .replace(/\n\n/g, '</p><p>')
+                .replace(/\n/g, '<br>');
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>

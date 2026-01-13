@@ -1,0 +1,134 @@
+name: Run Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Test Application
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'            # 🔥 enables pip cache
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements-dev.txt ]; then
+            pip install -r requirements-dev.txt
+          fi
+          pip install -r requirements.txt
+
+      - name: Lint with flake8 (non-blocking)
+        continue-on-error: true
+        run: |
+          pip install flake8
+          # Fail on syntax errors/undefined names only
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          # Warn on other issues (non-blocking)
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+      - name: Test imports
+        run: |
+          python - <<'PY'
+          from services.cache_service import get_cache_service; print('✓ Cache service import successful')
+          from services.inmemory_cache import InMemoryCacheService; print('✓ In-memory cache import successful')
+          try:
+              from services.pinecone_service import PineconeService; print('✓ Pinecone service import successful')
+          except Exception as e:
+              print(f'! Pinecone import issue (non-fatal for CI): {e}')
+          try:
+              from services.openai_service import OpenAIService; print('✓ OpenAI service import successful')
+          except Exception as e:
+              print(f'! OpenAI import issue (non-fatal for CI): {e}')
+          PY
+
+      - name: Test cache service factory
+        run: |
+          python - <<'PY'
+          import os
+          os.environ['CACHE_TYPE'] = 'memory'
+          from services.cache_service import get_cache_service
+          cache = get_cache_service()
+          print(f'✓ Cache service type: {type(cache).__name__}')
+          assert 'InMemoryCacheService' in type(cache).__name__, 'Expected InMemoryCacheService'
+          print('✓ Cache factory test passed')
+          PY
+
+      - name: Test in-memory cache operations
+        run: |
+          python - <<'PY'
+          from services.inmemory_cache import InMemoryCacheService
+          import time
+
+          cache = InMemoryCacheService(max_size=10, default_ttl=2)
+
+          # Basic set/get
+          cache.set('test-tenant', 'key1', 'value1')
+          assert cache.get('test-tenant', 'key1') == 'value1', 'Set/Get failed'
+          print('✓ Basic set/get works')
+
+          # TTL expiration
+          cache.set('test-tenant', 'key2', 'value2', ttl=1)
+          time.sleep(1.5)
+          assert cache.get('test-tenant', 'key2') is None, 'TTL not working'
+          print('✓ TTL expiration works')
+
+          # Stats
+          stats = cache.get_stats()
+          assert stats['enabled'] == True, 'Cache not enabled'
+          print('✓ Stats retrieval works')
+
+          print('✓ All in-memory cache tests passed!')
+          PY
+
+      - name: Test Flask app initialization (without secrets)
+        run: |
+          python - <<'PY'
+          import os
+          os.environ['CACHE_TYPE'] = 'memory'
+          os.environ['REDIS_ENABLED'] = 'false'
+          try:
+              from app import app
+              print('✓ Flask app imports successfully')
+          except Exception as e:
+              msg = str(e)
+              if any(k in msg for k in ('PINECONE', 'OPENAI', 'AWS')):
+                  print('✓ App initialization blocked by missing API keys (expected in CI)')
+              else:
+                  raise
+          PY
+
+      # Optional real tests (pytest) if/when you add tests/
+      - name: Run unit tests (pytest)
+        if: ${{ hashFiles('tests/**') != '' }}
+        run: |
+          pip install pytest pytest-cov
+          pytest -q --maxfail=1 --disable-warnings --cov=. --cov-report=xml
+
+      # Optional: upload coverage to GitHub summary or a service
+      # - name: Upload coverage artifact
+      #   if: ${{ hashFiles('coverage.xml') != '' }}
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: coverage
+      #     path: coverage.xml
+
+      - name: Test summary
+        run: |
+          echo "✅ All tests completed successfully!"
+          echo "Application is ready for deployment"

@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Multitenant RAG</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+        }
+        .header {
+            background: #2c3e50;
+            color: white;
+            padding: 1.5rem 2rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        .nav {
+            background: white;
+            padding: 0 2rem;
+            border-bottom: 1px solid #ddd;
+        }
+        .nav a {
+            display: inline-block;
+            padding: 1rem 1.5rem;
+            text-decoration: none;
+            color: #666;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        .nav a:hover, .nav a.active {
+            color: #3498db;
+            border-bottom-color: #3498db;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .card h3 {
+            font-size: 0.875rem;
+            color: #666;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+        .card .value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #2c3e50;
+        }
+        .card .status {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-top: 0.5rem;
+        }
+        .status.healthy {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status.degraded {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .section {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+        .section h2 {
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+            color: #2c3e50;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th {
+            text-align: left;
+            padding: 0.75rem;
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #666;
+            font-size: 0.875rem;
+        }
+        td {
+            padding: 0.75rem;
+            border-top: 1px solid #eee;
+        }
+        .btn {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            background: #3498db;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 0.875rem;
+            border: none;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn:hover {
+            background: #2980b9;
+        }
+        .btn-sm {
+            padding: 0.25rem 0.75rem;
+            font-size: 0.75rem;
+        }
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Multitenant RAG - Admin Dashboard</h1>
+    </div>
+
+    <div class="nav">
+        <a href="/admin" class="active">Dashboard</a>
+        <a href="/admin/tenants">Tenants</a>
+        <a href="/admin/logs">Logs</a>
+    </div>
+
+    <div class="container">
+        <div class="cards">
+            <div class="card">
+                <h3>Total Tenants</h3>
+                <div class="value" id="totalTenants">-</div>
+            </div>
+            <div class="card">
+                <h3>Active Tenants</h3>
+                <div class="value" id="activeTenants">-</div>
+            </div>
+            <div class="card">
+                <h3>Total Vectors</h3>
+                <div class="value" id="totalVectors">-</div>
+            </div>
+            <div class="card">
+                <h3>System Status</h3>
+                <span class="status healthy" id="systemStatus">Loading...</span>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Tenants Overview</h2>
+            <div id="tenantsTable" class="loading">Loading...</div>
+        </div>
+
+        <div class="section">
+            <h2>System Health</h2>
+            <div id="healthDetails" class="loading">Loading...</div>
+        </div>
+    </div>
+
+    <script>
+        async function loadDashboard() {
+            try {
+                // Load tenants
+                const tenantsResp = await fetch('/admin/api/tenants');
+                const tenantsData = await tenantsResp.json();
+
+                if (tenantsData.success) {
+                    const tenants = tenantsData.tenants;
+
+                    // Update cards
+                    document.getElementById('totalTenants').textContent = tenants.length;
+                    document.getElementById('activeTenants').textContent = tenants.filter(t => t.enabled).length;
+                    document.getElementById('totalVectors').textContent = tenants.reduce((sum, t) => sum + t.vector_count, 0);
+
+                    // Build table
+                    const table = `
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Tenant ID</th>
+                                    <th>Name</th>
+                                    <th>Status</th>
+                                    <th>Vectors</th>
+                                    <th>Rate Limit</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${tenants.map(t => `
+                                    <tr>
+                                        <td>${t.id}</td>
+                                        <td>${t.name}</td>
+                                        <td><span class="status ${t.enabled ? 'healthy' : 'degraded'}">${t.enabled ? 'Active' : 'Disabled'}</span></td>
+                                        <td>${t.vector_count.toLocaleString()}</td>
+                                        <td>${t.rate_limit}/min</td>
+                                        <td>
+                                            <a href="/admin/logs?tenant=${t.id}" class="btn btn-sm">View Logs</a>
+                                            <a href="/admin/documents/${t.id}" class="btn btn-sm">Documents</a>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    `;
+
+                    document.getElementById('tenantsTable').innerHTML = table;
+                }
+
+                // Load system health
+                const healthResp = await fetch('/admin/api/system/health');
+                const healthData = await healthResp.json();
+
+                const statusEl = document.getElementById('systemStatus');
+                statusEl.textContent = healthData.status.toUpperCase();
+                statusEl.className = 'status ' + (healthData.status === 'healthy' ? 'healthy' : 'degraded');
+
+                // Build health details
+                const healthHtml = `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Component</th>
+                                <th>Status</th>
+                                <th>Details</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${Object.entries(healthData.components).map(([name, comp]) => `
+                                <tr>
+                                    <td><strong>${name.toUpperCase()}</strong></td>
+                                    <td><span class="status ${comp.status === 'healthy' ? 'healthy' : 'degraded'}">${comp.status}</span></td>
+                                    <td>${comp.error || JSON.stringify(comp.details).substring(0, 100)}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+
+                document.getElementById('healthDetails').innerHTML = healthHtml;
+
+            } catch (error) {
+                console.error('Failed to load dashboard:', error);
+            }
+        }
+
+        loadDashboard();
+        setInterval(loadDashboard, 30000); // Refresh every 30 seconds
+    </script>
+</body>
+</html>

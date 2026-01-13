@@ -1,0 +1,34 @@
+{
+  "schema_version": "church_facts_v1",
+  "tenant_id": "ntnl",
+  "church_id": "covenant-lutheran-temple-tx",
+  "church_name": "Covenant Lutheran Church",
+  "timezone": "America/Chicago",
+  "source_url": "https://www.covenantlutheran.com/",
+  "last_verified": "2025-12-30",
+  "facts": [
+    {
+      "fact_type": "worship_service_time",
+      "label": "Traditional Worship Service (Early Service)",
+      "day_of_week": "Sunday",
+      "time_local": "08:30",
+      "channel": "in_person",
+      "notes": "This is our traditional worship service with classic Lutheran liturgy and hymns."
+    },
+    {
+      "fact_type": "worship_service_time",
+      "label": "Contemporary Worship Service (Late Service)",
+      "day_of_week": "Sunday",
+      "time_local": "11:00",
+      "channel": "hybrid",
+      "notes": "This service is also livestreamed on Zoom. Visit the Online Worship page at www.covenantlutheran.com to request a Zoom link. This service features contemporary worship style."
+    },
+    {
+      "fact_type": "sunday_school_time",
+      "label": "Sunday School (All Ages)",
+      "day_of_week": "Sunday",
+      "time_local": "09:45",
+      "channel": "in_person"
+    }
+  ]
+}

@@ -1,0 +1,114 @@
+# Environment files (NEVER commit secrets!)
+.env
+.env.local
+.env.development
+.env.production
+.env.*.local
+history.txt
+DISCORD_BOT_EB_DEPLOYMENT.md
+*.md
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+*.whl
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+virtualenv/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+*.code-workspace
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Logs
+*.log
+logs/
+*.out
+
+# Elastic Beanstalk (generated files)
+.elasticbeanstalk/config.yml
+.elasticbeanstalk/*.cfg.yml
+.elasticbeanstalk/saved_configs/
+
+# Terraform state files (contains sensitive data!)
+terraform/*.tfstate
+terraform/*.tfstate.*
+terraform/*.tfstate.backup
+terraform/.terraform/
+terraform/.terraform.lock.hcl
+terraform/terraform.tfvars
+
+# AWS
+*.pem
+*.key
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+.cache/
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# Large data files (ingest these via API/scripts)
+data/
+uploads/
+*.csv
+*.pdf
+*.docx
+
+# BM25 indices (auto-generated during ingestion)
+bm25_indices/
+
+# Claude Code
+.claude/
+
+# Deployment packages
+deploy.zip
+*.zip
+
+
+final_test.py
+test_baptism_cts.py
+test_boost.py
+test_cts_content.py
+test_cts_namespaces.py
+test_metadata_keys.py
+
+BIBLE_JSON_QUICKSTART.md
+BIBLE_NAMESPACE_SETUP.md
+ecic_one_year/
+
+scripts/convert_epub_to_bible_csv.py
+scripts/convert_json_to_bible_csv.py
+scripts/ingest_sermons_json.py
+scripts/purge_namespace.py
+scripts/verify_namespace_isolation.py
+sample_bible_formats.json

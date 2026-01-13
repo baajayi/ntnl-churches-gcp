@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logs Dashboard - Multitenant RAG</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+        }
+        .header {
+            background: #2c3e50;
+            color: white;
+            padding: 1.5rem 2rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        .nav {
+            background: white;
+            padding: 0 2rem;
+            border-bottom: 1px solid #ddd;
+        }
+        .nav a {
+            display: inline-block;
+            padding: 1rem 1.5rem;
+            text-decoration: none;
+            color: #666;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        .nav a:hover, .nav a.active {
+            color: #3498db;
+            border-bottom-color: #3498db;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+        .section {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+        .section h2 {
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+            color: #2c3e50;
+        }
+        .filters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+        }
+        .filter-group label {
+            font-size: 0.875rem;
+            color: #666;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        .filter-group select,
+        .filter-group input {
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.875rem;
+        }
+        .quick-filters {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+        .btn {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            background: #3498db;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 0.875rem;
+            border: none;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn:hover {
+            background: #2980b9;
+        }
+        .btn-sm {
+            padding: 0.25rem 0.75rem;
+            font-size: 0.75rem;
+        }
+        .btn-secondary {
+            background: #95a5a6;
+        }
+        .btn-secondary:hover {
+            background: #7f8c8d;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th {
+            text-align: left;
+            padding: 0.75rem;
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #666;
+            font-size: 0.875rem;
+            position: sticky;
+            top: 0;
+        }
+        td {
+            padding: 0.75rem;
+            border-top: 1px solid #eee;
+            font-size: 0.875rem;
+        }
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #999;
+        }
+        .pagination {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #eee;
+        }
+        .pagination-info {
+            color: #666;
+            font-size: 0.875rem;
+        }
+        .pagination-controls {
+            display: flex;
+            gap: 0.5rem;
+        }
+        .log-query {
+            max-width: 300px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .log-response {
+            max-width: 400px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #999;
+        }
+        .empty-state h3 {
+            color: #666;
+            margin-bottom: 0.5rem;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 2rem;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #eee;
+        }
+        .modal-header h3 {
+            margin: 0;
+            color: #2c3e50;
+        }
+        .close {
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            line-height: 1;
+        }
+        .close:hover {
+            color: #000;
+        }
+        .log-detail {
+            margin-bottom: 1.5rem;
+        }
+        .log-detail-label {
+            font-weight: 600;
+            color: #666;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+        }
+        .log-detail-value {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 4px;
+            border-left: 3px solid #3498db;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-family: monospace;
+            font-size: 0.875rem;
+        }
+        .log-query-clickable {
+            cursor: pointer;
+            color: #3498db;
+            text-decoration: underline;
+        }
+        .log-query-clickable:hover {
+            color: #2980b9;
+        }
+        .export-buttons {
+            display: flex;
+            gap: 0.5rem;
+            margin-left: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Multitenant RAG - Logs Dashboard</h1>
+    </div>
+
+    <div class="nav">
+        <a href="/admin">Dashboard</a>
+        <a href="/admin/tenants">Tenants</a>
+        <a href="/admin/logs" class="active">Logs</a>
+    </div>
+
+    <div class="container">
+        <!-- Filters Section -->
+        <div class="section">
+            <h2>Log Filters</h2>
+            <div class="filters-grid">
+                <div class="filter-group">
+                    <label>Tenant</label>
+                    <select id="tenantSelect">
+                        <option value="">Loading tenants...</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Start Date</label>
+                    <input type="date" id="startDate">
+                </div>
+                <div class="filter-group">
+                    <label>End Date</label>
+                    <input type="date" id="endDate">
+                </div>
+                <div class="filter-group">
+                    <label>Limit</label>
+                    <select id="limitSelect">
+                        <option value="50">50</option>
+                        <option value="100" selected>100</option>
+                        <option value="500">500</option>
+                        <option value="1000">1000</option>
+                    </select>
+                </div>
+            </div>
+            <div class="quick-filters">
+                <button class="btn btn-sm btn-secondary" onclick="setLast24Hours()">Last 24 Hours</button>
+                <button class="btn btn-sm btn-secondary" onclick="setLast7Days()">Last 7 Days</button>
+                <button class="btn btn-sm btn-secondary" onclick="setLast30Days()">Last 30 Days</button>
+                <button class="btn btn-sm btn-secondary" onclick="clearDates()">Clear Dates</button>
+            </div>
+            <button class="btn" onclick="loadLogs()">Apply Filters</button>
+        </div>
+
+        <!-- Results Section -->
+        <div class="section">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h2>Query Logs <span id="resultCount"></span></h2>
+                <div class="export-buttons" id="exportButtons" style="display: none;">
+                    <button class="btn btn-sm btn-secondary" onclick="exportToJSON()">Export JSON</button>
+                    <button class="btn btn-sm btn-secondary" onclick="exportToCSV()">Export CSV</button>
+                </div>
+            </div>
+            <div id="logsTable" class="loading">Select a tenant and click "Apply Filters" to view logs</div>
+            <div id="pagination" class="pagination" style="display: none;">
+                <div class="pagination-info" id="paginationInfo"></div>
+                <div class="pagination-controls">
+                    <button class="btn btn-sm" onclick="previousPage()" id="prevBtn">Previous</button>
+                    <button class="btn btn-sm" onclick="nextPage()" id="nextBtn">Next</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for viewing full log details -->
+    <div id="logModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Log Entry Details</h3>
+                <span class="close" onclick="closeModal()">&times;</span>
+            </div>
+            <div id="modalBody"></div>
+        </div>
+    </div>
+
+    <script>
+        let currentPage = 1;
+        const logsPerPage = 50;
+        let allLogs = [];
+        let allTenants = [];
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadTenants();
+
+            // Check if tenant is pre-selected via query param
+            const urlParams = new URLSearchParams(window.location.search);
+            const preselectedTenant = urlParams.get('tenant');
+            if (preselectedTenant) {
+                // Will select after tenants load
+                setTimeout(() => {
+                    document.getElementById('tenantSelect').value = preselectedTenant;
+                    loadLogs();
+                }, 500);
+            }
+        });
+
+        async function loadTenants() {
+            try {
+                const response = await fetch('/admin/api/tenants');
+                const data = await response.json();
+
+                if (data.success) {
+                    allTenants = data.tenants;
+                    const select = document.getElementById('tenantSelect');
+                    select.innerHTML = '<option value="">-- Select Tenant --</option>';
+
+                    data.tenants.forEach(tenant => {
+                        const option = document.createElement('option');
+                        option.value = tenant.id;
+                        option.textContent = `${tenant.name} (${tenant.id})`;
+                        select.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error('Failed to load tenants:', error);
+            }
+        }
+
+        async function loadLogs() {
+            const tenant = document.getElementById('tenantSelect').value;
+            if (!tenant) {
+                alert('Please select a tenant');
+                return;
+            }
+
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            const limit = document.getElementById('limitSelect').value;
+
+            // Build query string
+            let params = new URLSearchParams();
+            if (limit) params.append('limit', limit);
+
+            // Calculate days if date range is set
+            if (startDate && endDate) {
+                const start = new Date(startDate);
+                const end = new Date(endDate);
+                const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+                params.append('days', days);
+            } else if (startDate || endDate) {
+                // Default to 7 days if only one date is set
+                params.append('days', 7);
+            }
+
+            // Show loading
+            document.getElementById('logsTable').innerHTML = '<div class="loading">Loading logs...</div>';
+            document.getElementById('pagination').style.display = 'none';
+
+            try {
+                const response = await fetch(`/admin/api/logs/${tenant}?${params}`);
+                const data = await response.json();
+
+                if (data.success) {
+                    allLogs = data.logs || [];
+                    currentPage = 1;
+                    renderLogsPage();
+                } else {
+                    document.getElementById('logsTable').innerHTML =
+                        `<div class="empty-state"><h3>Error</h3><p>${data.error || 'Failed to load logs'}</p></div>`;
+                }
+            } catch (error) {
+                console.error('Failed to load logs:', error);
+                document.getElementById('logsTable').innerHTML =
+                    `<div class="empty-state"><h3>Error</h3><p>Failed to load logs: ${error.message}</p></div>`;
+            }
+        }
+
+        function renderLogsPage() {
+            const start = (currentPage - 1) * logsPerPage;
+            const end = start + logsPerPage;
+            const pageLogs = allLogs.slice(start, end);
+            const totalPages = Math.ceil(allLogs.length / logsPerPage);
+
+            // Update result count
+            document.getElementById('resultCount').textContent = `(${allLogs.length} total)`;
+
+            // Show/hide export buttons
+            if (allLogs.length > 0) {
+                document.getElementById('exportButtons').style.display = 'flex';
+            } else {
+                document.getElementById('exportButtons').style.display = 'none';
+            }
+
+            if (allLogs.length === 0) {
+                document.getElementById('logsTable').innerHTML =
+                    '<div class="empty-state"><h3>No Logs Found</h3><p>No query logs found for this tenant with the selected filters. Logs will appear once queries are made.</p></div>';
+                document.getElementById('pagination').style.display = 'none';
+                return;
+            }
+
+            // Render table
+            const tableHtml = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>Query</th>
+                            <th>Response</th>
+                            <th>Time (ms)</th>
+                            <th>Tokens</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${pageLogs.map((log, index) => `
+                            <tr>
+                                <td>${formatTimestamp(log.timestamp)}</td>
+                                <td class="log-query">
+                                    <span class="log-query-clickable" onclick="viewLogDetails(${start + index})" title="Click to view full details">
+                                        ${truncate(log.query || 'N/A', 100)}
+                                    </span>
+                                </td>
+                                <td class="log-response" title="${escapeHtml(log.response || '')}">${truncate(log.response || 'N/A', 150)}</td>
+                                <td>${log.time_ms || '-'}</td>
+                                <td>${log.metadata?.tokens_used || '-'}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+
+            document.getElementById('logsTable').innerHTML = tableHtml;
+
+            // Update pagination
+            document.getElementById('paginationInfo').textContent =
+                `Page ${currentPage} of ${totalPages} (Showing ${start + 1}-${Math.min(end, allLogs.length)} of ${allLogs.length})`;
+            document.getElementById('prevBtn').disabled = currentPage === 1;
+            document.getElementById('nextBtn').disabled = currentPage === totalPages;
+            document.getElementById('pagination').style.display = 'flex';
+        }
+
+        function previousPage() {
+            if (currentPage > 1) {
+                currentPage--;
+                renderLogsPage();
+            }
+        }
+
+        function nextPage() {
+            const totalPages = Math.ceil(allLogs.length / logsPerPage);
+            if (currentPage < totalPages) {
+                currentPage++;
+                renderLogsPage();
+            }
+        }
+
+        function setLast24Hours() {
+            const now = new Date();
+            const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+            document.getElementById('startDate').value = yesterday.toISOString().split('T')[0];
+            document.getElementById('endDate').value = now.toISOString().split('T')[0];
+        }
+
+        function setLast7Days() {
+            const now = new Date();
+            const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+            document.getElementById('startDate').value = weekAgo.toISOString().split('T')[0];
+            document.getElementById('endDate').value = now.toISOString().split('T')[0];
+        }
+
+        function setLast30Days() {
+            const now = new Date();
+            const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+            document.getElementById('startDate').value = monthAgo.toISOString().split('T')[0];
+            document.getElementById('endDate').value = now.toISOString().split('T')[0];
+        }
+
+        function clearDates() {
+            document.getElementById('startDate').value = '';
+            document.getElementById('endDate').value = '';
+        }
+
+        function formatTimestamp(isoString) {
+            if (!isoString) return 'N/A';
+            try {
+                const date = new Date(isoString);
+                return date.toLocaleString();
+            } catch (e) {
+                return isoString;
+            }
+        }
+
+        function truncate(text, length) {
+            if (!text) return '';
+            if (text.length <= length) return escapeHtml(text);
+            return escapeHtml(text.substring(0, length)) + '...';
+        }
+
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
+
+        function viewLogDetails(index) {
+            const log = allLogs[index];
+            const modal = document.getElementById('logModal');
+            const modalBody = document.getElementById('modalBody');
+
+            const detailsHtml = `
+                <div class="log-detail">
+                    <div class="log-detail-label">Timestamp</div>
+                    <div class="log-detail-value">${formatTimestamp(log.timestamp)}</div>
+                </div>
+                <div class="log-detail">
+                    <div class="log-detail-label">Tenant ID</div>
+                    <div class="log-detail-value">${log.tenant_id || 'N/A'}</div>
+                </div>
+                <div class="log-detail">
+                    <div class="log-detail-label">Query</div>
+                    <div class="log-detail-value">${escapeHtml(log.query || 'N/A')}</div>
+                </div>
+                <div class="log-detail">
+                    <div class="log-detail-label">Response</div>
+                    <div class="log-detail-value">${escapeHtml(log.response || 'N/A')}</div>
+                </div>
+                <div class="log-detail">
+                    <div class="log-detail-label">Response Time</div>
+                    <div class="log-detail-value">${log.time_ms || 'N/A'} ms</div>
+                </div>
+                <div class="log-detail">
+                    <div class="log-detail-label">Metadata</div>
+                    <div class="log-detail-value">${JSON.stringify(log.metadata || {}, null, 2)}</div>
+                </div>
+            `;
+
+            modalBody.innerHTML = detailsHtml;
+            modal.style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('logModal').style.display = 'none';
+        }
+
+        // Close modal when clicking outside of it
+        window.onclick = function(event) {
+            const modal = document.getElementById('logModal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        }
+
+        function exportToJSON() {
+            const tenant = document.getElementById('tenantSelect').value;
+            const dataStr = JSON.stringify(allLogs, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `${tenant}_logs_${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function exportToCSV() {
+            const tenant = document.getElementById('tenantSelect').value;
+
+            // CSV headers
+            let csv = 'Timestamp,Tenant ID,Query,Response,Time (ms),Tokens Used\n';
+
+            // CSV rows
+            allLogs.forEach(log => {
+                const row = [
+                    log.timestamp || '',
+                    log.tenant_id || '',
+                    `"${(log.query || '').replace(/"/g, '""')}"`,  // Escape quotes
+                    `"${(log.response || '').replace(/"/g, '""')}"`,
+                    log.time_ms || '',
+                    log.metadata?.tokens_used || ''
+                ];
+                csv += row.join(',') + '\n';
+            });
+
+            const dataBlob = new Blob([csv], {type: 'text/csv'});
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `${tenant}_logs_${new Date().toISOString().split('T')[0]}.csv`;
+            link.click();
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>

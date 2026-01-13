@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logs - {{ tenant_name }}</title>
+</head>
+<body>
+    <div class="nav">
+        <a href="/admin">Dashboard</a>
+        <a href="/admin/tenants">Tenants</a>
+        <a href="/admin/logs" class="active">Logs</a>
+    </div>
+    <h1>Logs for {{ tenant_name }} ({{ tenant_id }})</h1>
+    <div id="logs">Loading logs...</div>
+    <script>
+        fetch('/admin/api/logs/{{ tenant_id }}?days=7&limit=100')
+            .then(r => r.json())
+            .then(data => {
+                const logsDiv = document.getElementById('logs');
+                if (data.success && data.logs) {
+                    logsDiv.innerHTML = '<pre>' + JSON.stringify(data.logs, null, 2) + '</pre>';
+                } else {
+                    logsDiv.innerHTML = 'No logs found';
+                }
+            });
+    </script>
+</body>
+</html>

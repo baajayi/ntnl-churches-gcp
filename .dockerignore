@@ -1,0 +1,77 @@
+# Version control
+.git
+.gitignore
+.github
+
+# Virtual environments
+.venv
+venv/
+ENV/
+env/
+
+# Python cache
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Environment files (secrets should be in Secret Manager)
+.env
+.env.*
+
+# AWS specific (not needed for GCP)
+.ebextensions/
+.platform/
+.elasticbeanstalk/
+.ebignore
+
+# Terraform state (deploy separately)
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+
+# Documentation
+*.md
+docs/
+README.*
+
+# Test files
+tests/
+test_*
+*_test.py
+pytest.ini
+.pytest_cache/
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+.DS_Store
+Thumbs.db
+
+# Data files (should be ingested, not in container)
+data/
+*.json
+*.csv
+*.pdf
+*.docx
+*.txt
+!requirements.txt

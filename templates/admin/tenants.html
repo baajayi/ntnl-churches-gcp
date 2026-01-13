@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tenants - Admin Dashboard</title>
+    <link rel="stylesheet" href="/static/admin.css">
+</head>
+<body>
+    <div class="header">
+        <h1>Tenant Management</h1>
+    </div>
+    <div class="nav">
+        <a href="/admin">Dashboard</a>
+        <a href="/admin/tenants" class="active">Tenants</a>
+        <a href="/admin/logs">Logs</a>
+    </div>
+    <div class="container">
+        <h2>All Tenants</h2>
+        {% for tenant_id, config in tenants.items() %}
+        <div class="card">
+            <h3>{{ config.name }} ({{ tenant_id }})</h3>
+            <p>Status: {{ 'Active' if config.enabled else 'Disabled' }}</p>
+            <p>Rate Limit: {{ config.rate_limit }}/min</p>
+            <p>Namespace: {{ config.pinecone_namespace }}</p>
+            <a href="/admin/logs/{{ tenant_id }}" class="btn">View Logs</a>
+        </div>
+        {% endfor %}
+    </div>
+</body>
+</html>

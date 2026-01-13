@@ -1,0 +1,44 @@
+[
+  {
+    "query": "What are the core values of the ELCA?",
+    "relevant_ids": [
+      "elca_values_doc_chunk0",
+      "elca_values_doc_chunk1"
+    ],
+    "description": "Test retrieval of ELCA values documentation"
+  },
+  {
+    "query": "How do I become a member of a Lutheran church?",
+    "relevant_ids": [
+      "membership_guide_chunk0",
+      "membership_guide_chunk1",
+      "membership_guide_chunk2"
+    ],
+    "description": "Test retrieval of membership information"
+  },
+  {
+    "query": "What is the Lutheran understanding of baptism?",
+    "relevant_ids": [
+      "theology_baptism_chunk0",
+      "catechism_baptism_chunk3"
+    ],
+    "description": "Test theological query retrieval"
+  },
+  {
+    "query": "When are worship services held?",
+    "relevant_ids": [
+      "schedule_doc_chunk0",
+      "worship_times_chunk0"
+    ],
+    "description": "Test practical information retrieval"
+  },
+  {
+    "query": "What youth programs are available?",
+    "relevant_ids": [
+      "youth_programs_chunk0",
+      "youth_programs_chunk1",
+      "ministries_overview_chunk2"
+    ],
+    "description": "Test program information retrieval"
+  }
+]

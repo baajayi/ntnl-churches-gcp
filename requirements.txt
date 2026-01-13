@@ -1,0 +1,54 @@
+# Web Framework
+Flask==3.0.0
+Flask-CORS==4.0.0
+gunicorn==21.2.0
+Werkzeug==3.0.1
+
+# Vector Database
+pinecone-client==3.0.0
+
+# OpenAI
+openai>=1.12.0
+tiktoken==0.5.2
+tenacity==8.2.3
+
+# GCP Services
+google-cloud-storage==2.14.0
+google-cloud-secret-manager==2.16.4
+
+# Redis Cache (optional - only needed if CACHE_TYPE=redis)
+# In-memory cache is used by default, no dependencies required
+redis==5.0.1
+
+# Document Processing
+PyPDF2==3.0.1
+python-docx==1.1.0
+
+# Hybrid Search / BM25
+rank-bm25==0.2.2
+nltk==3.8.1
+
+# Cross-encoder reranking (OPTIONAL - install manually if needed for reranking)
+# sentence-transformers==2.2.2
+# Note: Large package (~500MB), can cause deployment timeouts on Cloud Run
+# Install separately or use larger container if reranking is needed
+
+# HTTP Requests
+requests==2.31.0
+
+httpx>=0.25.0
+
+# Date/Time handling
+pytz==2023.3.post1
+
+# Environment variables
+python-dotenv==1.0.0
+
+# Google Drive API (optional - for Google Drive ingestion)
+google-auth==2.25.2
+google-auth-oauthlib==1.2.0
+google-auth-httplib2==0.2.0
+google-api-python-client==2.111.0
+
+# Discord Bot
+discord.py==2.3.2
