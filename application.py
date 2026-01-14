@@ -48,7 +48,7 @@ TENANT_CONFIG = {
         'name': 'NTNL - Northern Texas-Northern Louisiana',
         'pinecone_namespace': 'tenant1',
         'accessible_namespaces': ['shared'],  # Can query from these namespaces
-        'rate_limit': 100,  # requests per minute
+        'rate_limit': 100,  
         'enabled': True,
         'system_prompt': (
             """You are a smart spiritual assistant engaged for the NTNL tenant.
