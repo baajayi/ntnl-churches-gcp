@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Our Savior Lutheran Church - Mesquite - AI Assistant</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-title h1 {
+            font-size: 1.5rem;
+            color: #667eea;
+            font-weight: 700;
+        }
+
+        .header-icon {
+            font-size: 2rem;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-clear {
+            padding: 8px 16px;
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: #666;
+            transition: all 0.2s;
+        }
+
+        .btn-clear:hover {
+            background: #e0e0e0;
+            border-color: #bbb;
+        }
+
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            max-width: 900px;
+            width: 100%;
+            margin: 0 auto;
+            background: white;
+            overflow: hidden;
+        }
+
+        .messages-wrapper {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+            scroll-behavior: smooth;
+        }
+
+        .messages-wrapper::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .messages-wrapper::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        .messages-wrapper::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+        }
+
+        .messages-wrapper::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+
+        .message-group {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .user-avatar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .assistant-avatar {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .message-content {
+            flex: 1;
+            max-width: calc(100% - 48px);
+        }
+
+        .message-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+
+        .message-sender {
+            font-weight: 600;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .message-time {
+            font-size: 12px;
+            color: #999;
+        }
+
+        .message-bubble {
+            background: #f8f9fa;
+            padding: 12px 16px;
+            border-radius: 12px;
+            border-top-left-radius: 4px;
+            line-height: 1.6;
+            color: #333;
+            word-wrap: break-word;
+            position: relative;
+        }
+
+        .user-message .message-bubble {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-top-left-radius: 12px;
+            border-top-right-radius: 4px;
+        }
+
+        /* Markdown styling */
+        .message-bubble h1,
+        .message-bubble h2,
+        .message-bubble h3,
+        .message-bubble h4,
+        .message-bubble h5,
+        .message-bubble h6 {
+            margin-top: 16px;
+            margin-bottom: 8px;
+            font-weight: 600;
+            line-height: 1.3;
+        }
+
+        .message-bubble h1 { font-size: 1.5em; }
+        .message-bubble h2 { font-size: 1.3em; }
+        .message-bubble h3 { font-size: 1.1em; }
+        .message-bubble h4 { font-size: 1em; }
+
+        .message-bubble h1:first-child,
+        .message-bubble h2:first-child,
+        .message-bubble h3:first-child,
+        .message-bubble h4:first-child {
+            margin-top: 0;
+        }
+
+        .message-bubble p {
+            margin-bottom: 12px;
+        }
+
+        .message-bubble p:last-child {
+            margin-bottom: 0;
+        }
+
+        .message-bubble strong {
+            font-weight: 600;
+        }
+
+        .message-bubble em {
+            font-style: italic;
+        }
+
+        .message-bubble code {
+            background: rgba(0, 0, 0, 0.05);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.9em;
+        }
+
+        .user-message .message-bubble code {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .message-bubble pre {
+            background: rgba(0, 0, 0, 0.05);
+            padding: 12px;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 12px 0;
+        }
+
+        .user-message .message-bubble pre {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .message-bubble pre code {
+            background: transparent;
+            padding: 0;
+        }
+
+        .message-bubble ul,
+        .message-bubble ol {
+            margin: 12px 0;
+            padding-left: 24px;
+        }
+
+        .message-bubble li {
+            margin-bottom: 6px;
+        }
+
+        .message-bubble blockquote {
+            border-left: 3px solid #667eea;
+            padding-left: 12px;
+            margin: 12px 0;
+            color: #666;
+        }
+
+        .user-message .message-bubble blockquote {
+            border-left-color: rgba(255, 255, 255, 0.5);
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .message-bubble a {
+            color: #667eea;
+            text-decoration: underline;
+        }
+
+        .user-message .message-bubble a {
+            color: white;
+            text-decoration: underline;
+        }
+
+        .message-bubble hr {
+            border: none;
+            border-top: 1px solid #e0e0e0;
+            margin: 16px 0;
+        }
+
+        .user-message .message-bubble hr {
+            border-top-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .message-bubble table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 12px 0;
+        }
+
+        .message-bubble th,
+        .message-bubble td {
+            border: 1px solid #e0e0e0;
+            padding: 8px;
+            text-align: left;
+        }
+
+        .message-bubble th {
+            background: rgba(0, 0, 0, 0.03);
+            font-weight: 600;
+        }
+
+        .user-message .message-bubble th {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .message-actions {
+            margin-top: 8px;
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-copy {
+            padding: 4px 12px;
+            background: transparent;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            color: #666;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .btn-copy:hover {
+            background: #f5f5f5;
+            border-color: #bbb;
+        }
+
+        .btn-copy.copied {
+            color: #4caf50;
+            border-color: #4caf50;
+        }
+
+        .typing-indicator {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            margin-bottom: 24px;
+        }
+
+        .typing-bubble {
+            background: #f8f9fa;
+            padding: 16px 20px;
+            border-radius: 12px;
+            border-top-left-radius: 4px;
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #999;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% {
+                transform: translateY(0);
+                opacity: 0.7;
+            }
+            30% {
+                transform: translateY(-10px);
+                opacity: 1;
+            }
+        }
+
+        .input-area {
+            border-top: 1px solid #e0e0e0;
+            padding: 20px;
+            background: white;
+            flex-shrink: 0;
+        }
+
+        .input-container {
+            display: flex;
+            gap: 12px;
+            max-width: 900px;
+            margin: 0 auto;
+            align-items: flex-end;
+        }
+
+        .input-wrapper {
+            flex: 1;
+            position: relative;
+        }
+
+        #queryInput {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 15px;
+            font-family: inherit;
+            resize: none;
+            max-height: 120px;
+            min-height: 50px;
+            transition: border-color 0.2s;
+        }
+
+        #queryInput:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        #queryInput::placeholder {
+            color: #999;
+        }
+
+        .btn-send {
+            padding: 14px 28px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+            min-width: 80px;
+        }
+
+        .btn-send:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(102, 126, 234, 0.5);
+        }
+
+        .btn-send:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .btn-send:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .welcome-message {
+            text-align: center;
+            padding: 40px 20px;
+            color: #666;
+        }
+
+        .welcome-message h2 {
+            color: #667eea;
+            margin-bottom: 12px;
+            font-size: 1.5rem;
+        }
+
+        .welcome-message p {
+            margin-bottom: 8px;
+            line-height: 1.6;
+        }
+
+        .suggested-questions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .suggested-question {
+            padding: 8px 16px;
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #667eea;
+            transition: all 0.2s;
+        }
+
+        .suggested-question:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        @media (max-width: 768px) {
+            .header-title h1 {
+                font-size: 1.2rem;
+            }
+
+            .messages-wrapper {
+                padding: 16px;
+            }
+
+            .message-group {
+                margin-bottom: 16px;
+            }
+
+            .input-area {
+                padding: 12px;
+            }
+
+            .btn-send {
+                padding: 12px 20px;
+                min-width: 70px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-title">
+            <span class="header-icon">✝️</span>
+            <h1>Our Savior Lutheran - Mesquite</h1>
+        </div>
+        <div class="header-actions">
+            <button class="btn-clear" onclick="clearChat()" id="clearBtn" title="Clear conversation">
+                🔄 Clear Chat
+            </button>
+        </div>
+    </div>
+
+    <div class="chat-container">
+        <div class="messages-wrapper" id="messagesWrapper">
+            <div class="welcome-message" id="welcomeMessage">
+                <h2>Welcome! 👋</h2>
+                <p>I'm here to help answer questions about Our Savior Lutheran Church in Mesquite, TX.</p>
+                <p>You can ask me about sermons, Lutheran theology, or ELCA values.</p>
+                <div class="suggested-questions">
+                    <div class="suggested-question" onclick="askQuestion('What did Pastor Shelter preach about?')">
+                        📖 Recent sermon?
+                    </div>
+                    <div class="suggested-question" onclick="askQuestion('Tell me about grace in Lutheran theology')">
+                        💙 About grace?
+                    </div>
+                    <div class="suggested-question" onclick="askQuestion('What is Our Savior Lutheran Church about?')">
+                        ⛪ About the church?
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="input-area">
+            <div class="input-container">
+                <div class="input-wrapper">
+                    <textarea
+                        id="queryInput"
+                        placeholder="Ask about sermons, Lutheran theology, or church teachings..."
+                        rows="1"
+                        aria-label="Message input"
+                    ></textarea>
+                </div>
+                <button class="btn-send" onclick="sendQuery()" id="sendBtn" aria-label="Send message">
+                    Send
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let conversationHistory = [];
+        const API_URL = window.location.origin + '/rag-query';
+        const TENANT_ID = 'mesquite';
+
+        // Configure marked for safe rendering
+        marked.setOptions({
+            breaks: true,
+            gfm: true,
+            headerIds: false,
+            mangle: false
+        });
+
+        // Auto-resize textarea
+        const textarea = document.getElementById('queryInput');
+        textarea.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+        });
+
+        // Send on Enter (but Shift+Enter for new line)
+        textarea.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendQuery();
+            }
+        });
+
+        function hideWelcome() {
+            const welcome = document.getElementById('welcomeMessage');
+            if (welcome) {
+                welcome.style.display = 'none';
+            }
+        }
+
+        function askQuestion(question) {
+            document.getElementById('queryInput').value = question;
+            sendQuery();
+        }
+
+        async function sendQuery() {
+            const input = document.getElementById('queryInput');
+            const messagesWrapper = document.getElementById('messagesWrapper');
+            const sendBtn = document.getElementById('sendBtn');
+            const query = input.value.trim();
+
+            if (!query) return;
+
+            // Hide welcome message
+            hideWelcome();
+
+            // Disable input
+            sendBtn.disabled = true;
+            input.disabled = true;
+
+            // Add user message to UI
+            appendMessage('user', query);
+            input.value = '';
+            input.style.height = 'auto';
+
+            // Show typing indicator
+            showTypingIndicator();
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Tenant-ID': TENANT_ID
+                    },
+                    body: JSON.stringify({
+                        query: query,
+                        conversation_history: conversationHistory
+                    })
+                });
+
+                const data = await response.json();
+
+                // Remove typing indicator
+                hideTypingIndicator();
+
+                if (data.success && data.answer) {
+                    const answer = data.answer;
+                    appendMessage('assistant', answer);
+
+                    // Update conversation history
+                    conversationHistory.push({role: 'user', content: query});
+                    conversationHistory.push({role: 'assistant', content: answer});
+                } else {
+                    appendMessage('assistant', 'Sorry, I encountered an error: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                hideTypingIndicator();
+                appendMessage('assistant', 'Sorry, I encountered a network error: ' + error.message);
+            }
+
+            // Re-enable input
+            sendBtn.disabled = false;
+            input.disabled = false;
+            input.focus();
+        }
+
+        function appendMessage(role, content) {
+            const messagesWrapper = document.getElementById('messagesWrapper');
+
+            const messageGroup = document.createElement('div');
+            messageGroup.className = 'message-group';
+
+            const avatar = document.createElement('div');
+            avatar.className = 'message-avatar ' + (role === 'user' ? 'user-avatar' : 'assistant-avatar');
+            avatar.textContent = role === 'user' ? '👤' : '✝️';
+
+            const messageContent = document.createElement('div');
+            messageContent.className = 'message-content';
+
+            const messageHeader = document.createElement('div');
+            messageHeader.className = 'message-header';
+
+            const sender = document.createElement('span');
+            sender.className = 'message-sender';
+            sender.textContent = role === 'user' ? 'You' : 'Our Savior Assistant';
+
+            const time = document.createElement('span');
+            time.className = 'message-time';
+            time.textContent = getCurrentTime();
+
+            messageHeader.appendChild(sender);
+            messageHeader.appendChild(time);
+
+            const bubble = document.createElement('div');
+            bubble.className = 'message-bubble';
+
+            // Render markdown for assistant messages, plain text for user messages
+            if (role === 'assistant') {
+                bubble.innerHTML = marked.parse(content);
+
+                // Make links open in new tab
+                bubble.querySelectorAll('a').forEach(link => {
+                    link.setAttribute('target', '_blank');
+                    link.setAttribute('rel', 'noopener noreferrer');
+                });
+            } else {
+                bubble.textContent = content;
+            }
+
+            messageContent.appendChild(messageHeader);
+            messageContent.appendChild(bubble);
+
+            // Add copy button for assistant messages
+            if (role === 'assistant') {
+                const actions = document.createElement('div');
+                actions.className = 'message-actions';
+
+                const copyBtn = document.createElement('button');
+                copyBtn.className = 'btn-copy';
+                copyBtn.innerHTML = '📋 Copy';
+                copyBtn.onclick = function() {
+                    // Copy the original content (not the rendered HTML)
+                    navigator.clipboard.writeText(content).then(() => {
+                        copyBtn.innerHTML = '✓ Copied!';
+                        copyBtn.classList.add('copied');
+                        setTimeout(() => {
+                            copyBtn.innerHTML = '📋 Copy';
+                            copyBtn.classList.remove('copied');
+                        }, 2000);
+                    }).catch(err => {
+                        console.error('Failed to copy:', err);
+                    });
+                };
+
+                actions.appendChild(copyBtn);
+                messageContent.appendChild(actions);
+            }
+
+            messageGroup.appendChild(avatar);
+            messageGroup.appendChild(messageContent);
+            messagesWrapper.appendChild(messageGroup);
+
+            // Smooth scroll to bottom
+            setTimeout(() => {
+                messagesWrapper.scrollTop = messagesWrapper.scrollHeight;
+            }, 100);
+        }
+
+        function showTypingIndicator() {
+            const messagesWrapper = document.getElementById('messagesWrapper');
+
+            const typingIndicator = document.createElement('div');
+            typingIndicator.className = 'typing-indicator';
+            typingIndicator.id = 'typingIndicator';
+
+            const avatar = document.createElement('div');
+            avatar.className = 'message-avatar assistant-avatar';
+            avatar.textContent = '✝️';
+
+            const typingBubble = document.createElement('div');
+            typingBubble.className = 'typing-bubble';
+
+            for (let i = 0; i < 3; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'typing-dot';
+                typingBubble.appendChild(dot);
+            }
+
+            typingIndicator.appendChild(avatar);
+            typingIndicator.appendChild(typingBubble);
+            messagesWrapper.appendChild(typingIndicator);
+
+            messagesWrapper.scrollTop = messagesWrapper.scrollHeight;
+        }
+
+        function hideTypingIndicator() {
+            const indicator = document.getElementById('typingIndicator');
+            if (indicator) {
+                indicator.remove();
+            }
+        }
+
+        function getCurrentTime() {
+            const now = new Date();
+            return now.toLocaleTimeString('en-US', {
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true
+            });
+        }
+
+        function clearChat() {
+            if (confirm('Are you sure you want to clear the conversation?')) {
+                conversationHistory = [];
+                const messagesWrapper = document.getElementById('messagesWrapper');
+                messagesWrapper.innerHTML = `
+                    <div class="welcome-message" id="welcomeMessage">
+                        <h2>Welcome! 👋</h2>
+                        <p>I'm here to help answer questions about Our Savior Lutheran Church in Mesquite, TX.</p>
+                        <p>You can ask me about sermons, Lutheran theology, or ELCA values.</p>
+                        <div class="suggested-questions">
+                            <div class="suggested-question" onclick="askQuestion('What did Pastor Shelter preach about?')">
+                                📖 Recent sermon?
+                            </div>
+                            <div class="suggested-question" onclick="askQuestion('Tell me about grace in Lutheran theology')">
+                                💙 About grace?
+                            </div>
+                            <div class="suggested-question" onclick="askQuestion('What is Our Savior Lutheran Church about?')">
+                                ⛪ About the church?
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // Focus input on load
+        document.getElementById('queryInput').focus();
+    </script>
+</body>
+</html>
