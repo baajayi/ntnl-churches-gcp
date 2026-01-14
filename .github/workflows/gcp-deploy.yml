@@ -55,7 +55,7 @@ jobs:
             --service-account=ntnl-churches-runtime@zeta-bonfire-476018-u6.iam.gserviceaccount.com \
             --allow-unauthenticated \
             --port=8080 \
-            --memory=1Gi \
+            --memory=512Mi \
             --cpu=1 \
             --concurrency=80 \
             --min-instances=0 \
@@ -75,9 +75,21 @@ jobs:
 
       - name: Verify deployment
         run: |
-          sleep 10
-          curl -f ${{ steps.service_url.outputs.service_url }}/health || exit 1
-          echo "Health check passed!"
+          echo "Waiting for service to be ready..."
+          sleep 30
+
+          # Retry health check up to 5 times with 10 second intervals
+          for i in {1..5}; do
+            if curl -f ${{ steps.service_url.outputs.service_url }}/health; then
+              echo "✅ Health check passed!"
+              exit 0
+            fi
+            echo "Attempt $i failed, retrying in 10 seconds..."
+            sleep 10
+          done
+
+          echo "❌ Health check failed after 5 attempts"
+          exit 1
 
       - name: Deployment Summary
         run: |
