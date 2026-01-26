@@ -12,6 +12,9 @@ RUN apt-get update && apt-get install -y \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Pre-download NLTK data during build (prevents runtime download issues)
+RUN python -m nltk.downloader -d /usr/local/share/nltk_data stopwords punkt wordnet omw-1.4
+
 # Final stage
 FROM python:3.11-slim
 
@@ -20,6 +23,9 @@ WORKDIR /app
 # Copy Python packages from builder
 COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
 COPY --from=builder /usr/local/bin /usr/local/bin
+
+# Copy NLTK data from builder
+COPY --from=builder /usr/local/share/nltk_data /usr/local/share/nltk_data
 
 # Copy application code
 COPY . .
