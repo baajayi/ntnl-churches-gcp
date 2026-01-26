@@ -55,7 +55,7 @@ jobs:
             --service-account=ntnl-churches-runtime@zeta-bonfire-476018-u6.iam.gserviceaccount.com \
             --allow-unauthenticated \
             --port=8080 \
-            --memory=512Mi \
+            --memory=1Gi \
             --cpu=1 \
             --concurrency=80 \
             --min-instances=0 \
