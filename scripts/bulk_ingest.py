@@ -30,7 +30,7 @@ import threading
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from services.pinecone_service import get_pinecone_service
-from services.openai_service import get_openai_service
+from services.gemini_service import get_gemini_service
 from services.bm25_service import get_bm25_service
 from dotenv import load_dotenv
 
@@ -593,13 +593,13 @@ def _validate_and_normalize_chunks(chunks: List[str], min_chunk_chars: int) -> L
             cleaned.append(s)
     return cleaned
 
-def _embed_single_batch(batch_texts: List[str], batch_num: int, openai_service) -> Tuple[int, List, int]:
+def _embed_single_batch(batch_texts: List[str], batch_num: int, gemini_service) -> Tuple[int, List, int]:
     """
     Embed a single batch and return (batch_num, embeddings, tokens_used)
     Used for parallel embedding with ThreadPoolExecutor
     """
     try:
-        resp = openai_service.create_embeddings_batch(batch_texts)
+        resp = gemini_service.create_embeddings_batch(batch_texts)
         if not resp or not resp.get('success'):
             error_msg = resp.get('error') if resp else 'unknown error'
             print(f"  Warning: embedding batch {batch_num} failed: {error_msg}")
@@ -622,7 +622,7 @@ def _embed_in_batches(texts: List[str], embed_batch_size: int, max_workers: int 
     Returns:
         (embeddings, total_tokens)
     """
-    openai_service = get_openai_service()
+    gemini_service = get_gemini_service()
 
     # Split texts into batches
     batches = []
@@ -642,7 +642,7 @@ def _embed_in_batches(texts: List[str], embed_batch_size: int, max_workers: int 
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         # Submit all batches
         futures = {
-            executor.submit(_embed_single_batch, batch_texts, batch_num, openai_service): batch_num
+            executor.submit(_embed_single_batch, batch_texts, batch_num, gemini_service): batch_num
             for batch_num, batch_texts in batches
         }
 

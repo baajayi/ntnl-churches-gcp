@@ -7,6 +7,8 @@
 history.txt
 DISCORD_BOT_EB_DEPLOYMENT.md
 *.md
+!CLAUDE.md
+!README.md
 
 # Python
 __pycache__/

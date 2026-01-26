@@ -19,7 +19,7 @@ print("=" * 60)
 # Test 1: Import all required modules
 print("\n1. Testing imports...")
 try:
-    from services.openai_service import get_openai_service
+    from services.gemini_service import get_gemini_service
     from services.pinecone_service import get_pinecone_service
     from services.bm25_service import get_bm25_service
     print("   ✓ All imports successful")
@@ -30,7 +30,7 @@ except Exception as e:
 # Test 2: Initialize services
 print("\n2. Testing service initialization...")
 try:
-    openai_service = get_openai_service()
+    gemini_service = get_gemini_service()
     pinecone_service = get_pinecone_service()
     bm25_service = get_bm25_service()
     print("   ✓ Services initialized")
@@ -38,19 +38,19 @@ except Exception as e:
     print(f"   ✗ Service initialization failed: {e}")
     sys.exit(1)
 
-# Test 3: Check OpenAI client
-print("\n3. Testing OpenAI client...")
-if openai_service.client is None:
-    print("   ⚠ OpenAI client not initialized (check OPENAI_API_KEY)")
+# Test 3: Check Gemini client
+print("\n3. Testing Gemini client...")
+if not gemini_service.initialized:
+    print("   ⚠ Gemini client not initialized (check GCP_PROJECT_ID)")
 else:
-    print(f"   ✓ OpenAI client ready")
-    print(f"     - Embedding model: {openai_service.embedding_model}")
-    print(f"     - Chat model: {openai_service.chat_model}")
+    print(f"   ✓ Gemini client ready")
+    print(f"     - Embedding model: {gemini_service.embedding_model_name}")
+    print(f"     - Chat model: {gemini_service.chat_model_name}")
 
 # Test 4: Test retry logic with empty input (should return error dict, not crash)
 print("\n4. Testing error handling...")
 try:
-    result = openai_service.create_embeddings_batch([])
+    result = gemini_service.create_embeddings_batch([])
     if result['success']:
         print("   ✗ Should have failed with empty input")
     else:

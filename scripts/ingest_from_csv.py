@@ -16,7 +16,7 @@ import uuid
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from services.pinecone_service import get_pinecone_service
-from services.openai_service import get_openai_service
+from services.gemini_service import get_gemini_service
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -70,7 +70,7 @@ def ingest_from_csv(csv_file: str, namespace: str, chunk_content: bool = True, b
     print("=" * 60)
 
     pinecone_service = get_pinecone_service()
-    openai_service = get_openai_service()
+    gemini_service = get_gemini_service()
 
     all_vectors = []
     total_tokens = 0
@@ -104,7 +104,7 @@ def ingest_from_csv(csv_file: str, namespace: str, chunk_content: bool = True, b
                 chunks = [content]
 
             # Create embeddings
-            embeddings_result = openai_service.create_embeddings_batch(chunks)
+            embeddings_result = gemini_service.create_embeddings_batch(chunks)
 
             if not embeddings_result['success']:
                 print(f"Row {row_num}: Error creating embeddings - {embeddings_result.get('error')}")

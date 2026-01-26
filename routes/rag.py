@@ -5,7 +5,7 @@ Core endpoints for RAG (Retrieval Augmented Generation) functionality
 
 from flask import Blueprint, request, jsonify, g, current_app
 from services.pinecone_service import get_pinecone_service
-from services.openai_service import get_openai_service
+from services.gemini_service import get_gemini_service
 from services.bm25_service import get_bm25_service
 import time
 
@@ -13,7 +13,7 @@ rag_bp = Blueprint("rag", __name__)
 
 # Get services
 pinecone_service = get_pinecone_service()
-openai_service = get_openai_service()
+gemini_service = get_gemini_service()
 bm25_service = get_bm25_service()
 
 @rag_bp.route("/rag-query", methods=["POST"])
@@ -31,7 +31,7 @@ def rag_query():
     start_time = time.time()
 
     # Lazy fetch services here, not at module import
-    openai_svc = get_openai_service()
+    gemini_svc = get_gemini_service()
     pinecone_svc = get_pinecone_service()
 
     try:
@@ -71,7 +71,7 @@ def rag_query():
                 return jsonify(cached_result), 200
 
         # Generate embedding for query using lazy-loaded service
-        embedding_result = openai_svc.create_embedding(query_text)
+        embedding_result = gemini_svc.create_embedding(query_text)
 
         if not embedding_result['success']:
             return jsonify({
@@ -114,7 +114,7 @@ def rag_query():
         conversation_history = data.get('conversation_history', [])
 
         # Generate response using RAG
-        rag_result = openai_svc.generate_rag_response(
+        rag_result = gemini_svc.generate_rag_response(
             query=query_text,
             context_chunks=search_result['matches'],
             system_prompt=system_prompt,
@@ -270,7 +270,7 @@ def query():
                 return jsonify(cached_result), 200
 
         # Generate embedding for query
-        embedding_result = openai_service.create_embedding(query_text)
+        embedding_result = gemini_service.create_embedding(query_text)
 
         if not embedding_result['success']:
             return jsonify({
@@ -342,7 +342,7 @@ def query():
         conversation_history = data.get('conversation_history', [])
 
         # Generate response using RAG
-        rag_result = openai_service.generate_rag_response(
+        rag_result = gemini_service.generate_rag_response(
             query=query_text,
             context_chunks=search_result['matches'],
             system_prompt=system_prompt,
@@ -453,7 +453,7 @@ def search():
         metadata_filter = data.get('filter')
 
         # Generate embedding for query
-        embedding_result = openai_service.create_embedding(query_text)
+        embedding_result = gemini_service.create_embedding(query_text)
 
         if not embedding_result['success']:
             return jsonify({

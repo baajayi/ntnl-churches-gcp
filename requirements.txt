@@ -7,9 +7,8 @@ Werkzeug==3.0.1
 # Vector Database
 pinecone-client==3.0.0
 
-# OpenAI
-openai>=1.12.0
-tiktoken==0.5.2
+# Google Vertex AI (Gemini)
+google-cloud-aiplatform>=1.38.0
 tenacity==8.2.3
 
 # GCP Services

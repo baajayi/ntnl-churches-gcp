@@ -5,7 +5,7 @@ Web interface for managing tenants, viewing logs, and monitoring usage
 
 from flask import Blueprint, render_template, request, jsonify
 from services.pinecone_service import get_pinecone_service
-from services.openai_service import get_openai_service
+from services.gemini_service import get_gemini_service
 from datetime import datetime, timedelta
 import pytz
 
@@ -13,7 +13,7 @@ admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 
 # Get services
 pinecone_service = get_pinecone_service()
-openai_service = get_openai_service()
+gemini_service = get_gemini_service()
 
 
 @admin_bp.route('/', methods=['GET'])

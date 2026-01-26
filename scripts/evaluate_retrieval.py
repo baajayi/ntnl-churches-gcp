@@ -15,7 +15,7 @@ from collections import defaultdict
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from services.pinecone_service import get_pinecone_service
-from services.openai_service import get_openai_service
+from services.gemini_service import get_gemini_service
 
 
 class RetrievalEvaluator:
@@ -30,7 +30,7 @@ class RetrievalEvaluator:
         """
         self.namespace = namespace
         self.pinecone_service = get_pinecone_service()
-        self.openai_service = get_openai_service()
+        self.gemini_service = get_gemini_service()
 
     def precision_at_k(self, retrieved: List[str], relevant: List[str], k: int) -> float:
         """
@@ -192,7 +192,7 @@ class RetrievalEvaluator:
         # Perform search based on method
         if search_method == 'vector':
             # Create query embedding
-            embed_result = self.openai_service.create_embedding(query)
+            embed_result = self.gemini_service.create_embedding(query)
             if not embed_result['success']:
                 print(f"Error creating embedding: {embed_result.get('error')}")
                 return {}

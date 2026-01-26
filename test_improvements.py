@@ -12,14 +12,14 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 
 def test_text_snippet_fix():
-    """Test that openai_service now uses full_text instead of text_snippet"""
+    """Test that gemini_service now uses full_text instead of text_snippet"""
     print("\n" + "="*70)
     print("TEST 1: Text Snippet → Full Text Fix")
     print("="*70)
 
-    from services.openai_service import OpenAIService
+    from services.gemini_service import GeminiService
 
-    service = OpenAIService()
+    service = GeminiService()
 
     # Mock chunk data with both fields
     mock_chunks = [

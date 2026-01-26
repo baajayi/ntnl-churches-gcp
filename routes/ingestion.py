@@ -5,7 +5,7 @@ API endpoints for uploading and processing documents into embeddings
 
 from flask import Blueprint, request, jsonify, g, current_app
 from services.pinecone_service import get_pinecone_service
-from services.openai_service import get_openai_service
+from services.gemini_service import get_gemini_service
 from werkzeug.utils import secure_filename
 import os
 import uuid
@@ -31,7 +31,7 @@ ingestion_bp = Blueprint('ingestion', __name__)
 
 # Get services
 pinecone_service = get_pinecone_service()
-openai_service = get_openai_service()
+gemini_service = get_gemini_service()
 
 # Allowed file extensions
 ALLOWED_EXTENSIONS = {'txt', 'pdf', 'docx', 'md'}
@@ -90,7 +90,7 @@ def embed_chunks_iter(chunks: List[str]):
     total = len(chunks)
     for start in range(0, total, EMBED_BATCH_SIZE):
         batch = chunks[start:start + EMBED_BATCH_SIZE]
-        result = openai_service.create_embeddings_batch(batch)
+        result = gemini_service.create_embeddings_batch(batch)
         if not result['success']:
             raise RuntimeError(f"Embedding batch failed: {result.get('error', 'unknown error')}")
 

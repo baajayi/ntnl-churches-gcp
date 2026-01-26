@@ -41,11 +41,7 @@ echo ""
 echo "Enter your API keys (press Enter to skip):"
 echo "================================================"
 
-# OpenAI API Key
-if [ -z "$OPENAI_API_KEY" ]; then
-    read -p "OpenAI API Key (sk-...): " OPENAI_API_KEY
-fi
-add_secret "OPENAI_API_KEY" "$OPENAI_API_KEY"
+# Note: Gemini uses IAM authentication, no API key needed
 
 # Pinecone API Key
 if [ -z "$PINECONE_API_KEY" ]; then

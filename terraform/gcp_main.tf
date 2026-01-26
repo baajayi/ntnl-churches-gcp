@@ -43,7 +43,8 @@ resource "google_project_service" "apis" {
     "storage.googleapis.com",
     "cloudbuild.googleapis.com",
     "compute.googleapis.com",
-    "iam.googleapis.com"
+    "iam.googleapis.com",
+    "aiplatform.googleapis.com"
   ])
 
   service            = each.value
@@ -125,13 +126,21 @@ resource "google_project_iam_member" "secret_accessor" {
   depends_on = [google_service_account.cloudrun_runtime]
 }
 
+# Grant Vertex AI user role (for Gemini API access)
+resource "google_project_iam_member" "vertex_ai_user" {
+  project = var.project_id
+  role    = "roles/aiplatform.user"
+  member  = "serviceAccount:${google_service_account.cloudrun_runtime.email}"
+
+  depends_on = [google_service_account.cloudrun_runtime]
+}
+
 # ============================================================================
 # Secret Manager Secrets (values populated manually via gcloud)
 # ============================================================================
 
 resource "google_secret_manager_secret" "secrets" {
   for_each = toset([
-    "OPENAI_API_KEY",
     "PINECONE_API_KEY",
     "DISCORD_TOKEN",
     "CHATBOT_API_KEY"
@@ -254,7 +263,6 @@ output "github_service_account" {
 
 output "secrets_to_populate" {
   value = [
-    "OPENAI_API_KEY",
     "PINECONE_API_KEY",
     "DISCORD_TOKEN",
     "CHATBOT_API_KEY"
