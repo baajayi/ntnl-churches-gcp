@@ -52,7 +52,7 @@ class PineconeService:
                 # Create index with serverless spec
                 self.pc.create_index(
                     name=self.index_name,
-                    dimension=3072,  # Gemini text-embedding-005 with output_dimensionality=3072
+                    dimension=3072,  # Gemini gemini-embedding-001 with output_dimensionality=3072
                     metric='cosine',
                     spec=ServerlessSpec(
                         cloud='aws',

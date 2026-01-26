@@ -158,7 +158,7 @@ Required variables (see `.env.example`):
 **Note**: Gemini uses IAM authentication via Application Default Credentials (ADC). No API key is required. On Cloud Run, the service account automatically has credentials. For local development, use `gcloud auth application-default login`.
 
 ### Pinecone Index Specs
-- **Dimension**: 3072 (Gemini `text-embedding-005` with `output_dimensionality=3072`)
+- **Dimension**: 3072 (Gemini `gemini-embedding-001` with `output_dimensionality=3072`)
 - **Metric**: Cosine similarity
 - **Spec**: Serverless (AWS, region from `PINECONE_ENVIRONMENT`)
 - Index auto-created on first run if missing

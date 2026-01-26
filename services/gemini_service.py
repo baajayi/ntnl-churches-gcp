@@ -35,7 +35,7 @@ class GeminiService:
 
             # Model configurations
             self.chat_model_name = os.getenv('GEMINI_CHAT_MODEL', 'gemini-2.0-flash')
-            self.embedding_model_name = os.getenv('GEMINI_EMBEDDING_MODEL', 'text-embedding-005')
+            self.embedding_model_name = os.getenv('GEMINI_EMBEDDING_MODEL', 'gemini-embedding-001')
             self.embedding_dimension = int(os.getenv('GEMINI_EMBEDDING_DIMENSION', '3072'))
             self.max_tokens = int(os.getenv('GEMINI_MAX_TOKENS', '1000'))
 
@@ -135,7 +135,8 @@ class GeminiService:
                 'error': 'No valid texts provided'
             }
 
-        # Define the retry-able function
+        # Define the retry-able function for single text
+        # Note: gemini-embedding-001 only supports one input at a time
         @retry(
             retry=retry_if_exception_type((
                 google_exceptions.ServiceUnavailable,
@@ -146,17 +147,20 @@ class GeminiService:
             stop=stop_after_attempt(3),
             reraise=True
         )
-        def _create_embeddings_with_retry():
-            return self.embedding_model.get_embeddings(
-                texts,
+        def _create_single_embedding_with_retry(text):
+            result = self.embedding_model.get_embeddings(
+                [text],
                 output_dimensionality=self.embedding_dimension
             )
+            return result[0].values if result else None
 
         try:
-            # Call with retry logic
-            embeddings_response = _create_embeddings_with_retry()
-
-            embeddings = [emb.values for emb in embeddings_response]
+            # Process each text individually (gemini-embedding-001 requirement)
+            embeddings = []
+            for text in texts:
+                embedding = _create_single_embedding_with_retry(text)
+                if embedding:
+                    embeddings.append(embedding)
 
             # Estimate tokens (Vertex AI doesn't return token count for embeddings)
             tokens_used = sum(self._estimate_tokens(text) for text in texts)

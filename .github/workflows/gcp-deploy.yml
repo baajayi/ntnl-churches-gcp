@@ -61,7 +61,7 @@ jobs:
             --min-instances=0 \
             --max-instances=10 \
             --timeout=120s \
-            --set-env-vars="FLASK_ENV=production,CACHE_TYPE=memory,GCS_LOGS_BUCKET=ntnl-churches-logs,PINECONE_INDEX_NAME=multitenant-rag,PINECONE_ENVIRONMENT=us-east-1,GOOGLE_CLOUD_PROJECT=zeta-bonfire-476018-u6,GCP_LOCATION=us-central1,GEMINI_CHAT_MODEL=gemini-2.0-flash,GEMINI_EMBEDDING_MODEL=text-embedding-005,GEMINI_EMBEDDING_DIMENSION=3072" \
+            --set-env-vars="FLASK_ENV=production,CACHE_TYPE=memory,GCS_LOGS_BUCKET=ntnl-churches-logs,PINECONE_INDEX_NAME=multitenant-rag,PINECONE_ENVIRONMENT=us-east-1,GOOGLE_CLOUD_PROJECT=zeta-bonfire-476018-u6,GCP_LOCATION=us-central1,GEMINI_CHAT_MODEL=gemini-2.0-flash,GEMINI_EMBEDDING_MODEL=gemini-embedding-001,GEMINI_EMBEDDING_DIMENSION=3072" \
             --set-secrets="PINECONE_API_KEY=PINECONE_API_KEY:latest,DISCORD_TOKEN=DISCORD_TOKEN:latest,CHATBOT_API_KEY=CHATBOT_API_KEY:latest"
 
       - name: Get Service URL
