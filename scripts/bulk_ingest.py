@@ -15,6 +15,7 @@ Key protections:
 import os
 import sys
 import argparse
+import json
 from pathlib import Path
 from typing import List, Dict, Optional, Tuple
 import time
@@ -158,6 +159,7 @@ ALLOWED_EXTENSIONS = {
     '.rtf',
     '.odt',
     '.epub',
+    '.json',            # <-- sermon JSON files
 }
 
 # --------------- Chunking ---------------
@@ -457,6 +459,112 @@ def extract_text_from_epub(file_path: str) -> str:
             parts.append(soup.get_text(separator="\n", strip=True))
     return "\n".join(parts)
 
+
+def extract_text_from_json(file_path: str) -> Tuple[str, Dict]:
+    """
+    Extract text from sermon JSON files.
+
+    Supports the canonical sermon JSON format with structure:
+    - sermon.sources.authoritative_text.text (main sermon text)
+    - sermon.title, sermon.date_delivered, sermon.preacher.name (metadata)
+    - sermon.scripture_readings (scripture references)
+
+    Also supports batch JSON (array of sermons) and other JSON text formats.
+    """
+    metadata = {}
+
+    with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+        data = json.load(f)
+
+    # Handle sermon canonical format (single sermon)
+    if isinstance(data, dict) and 'sermon' in data:
+        sermon = data['sermon']
+
+        # Extract main text from authoritative_text
+        text = ""
+        sources = sermon.get('sources', {})
+        auth_text = sources.get('authoritative_text', {})
+        if auth_text and auth_text.get('text'):
+            text = auth_text['text']
+
+        # Build metadata
+        if sermon.get('title'):
+            metadata['title'] = sermon['title']
+        if sermon.get('date_delivered'):
+            metadata['date'] = sermon['date_delivered']
+        if sermon.get('preacher', {}).get('name'):
+            metadata['preacher'] = sermon['preacher']['name']
+
+        # Extract scripture references
+        scripture_refs = []
+        for reading in sermon.get('scripture_readings', []):
+            ref = reading.get('book', '')
+            if reading.get('chapter'):
+                ref += f" {reading['chapter']}"
+                if reading.get('verse_start'):
+                    ref += f":{reading['verse_start']}"
+                    if reading.get('verse_end') and reading['verse_end'] != reading['verse_start']:
+                        ref += f"-{reading['verse_end']}"
+            scripture_refs.append(ref)
+
+        if scripture_refs:
+            metadata['scripture_references'] = ', '.join(scripture_refs)
+
+        # Add church info if available
+        if data.get('church_name'):
+            metadata['church'] = data['church_name']
+
+        # Prepend metadata as header for better context
+        header_parts = []
+        if metadata.get('title'):
+            header_parts.append(f"Sermon: {metadata['title']}")
+        if metadata.get('preacher'):
+            header_parts.append(f"Preacher: {metadata['preacher']}")
+        if metadata.get('date'):
+            header_parts.append(f"Date: {metadata['date']}")
+        if metadata.get('scripture_references'):
+            header_parts.append(f"Scripture: {metadata['scripture_references']}")
+        if metadata.get('church'):
+            header_parts.append(f"Church: {metadata['church']}")
+
+        if header_parts:
+            text = '\n'.join(header_parts) + '\n\n' + text
+
+        return text, metadata
+
+    # Handle batch JSON (array of sermons)
+    if isinstance(data, list):
+        all_texts = []
+        for item in data:
+            if isinstance(item, dict) and 'sermon' in item:
+                # Recursively extract using the same logic
+                temp_path = file_path + '.temp'
+                with open(temp_path, 'w') as f:
+                    json.dump(item, f)
+                try:
+                    item_text, _ = extract_text_from_json(temp_path)
+                    all_texts.append(item_text)
+                finally:
+                    if os.path.exists(temp_path):
+                        os.remove(temp_path)
+            elif isinstance(item, dict) and 'text' in item:
+                all_texts.append(item['text'])
+            elif isinstance(item, str):
+                all_texts.append(item)
+        return '\n\n---\n\n'.join(all_texts), metadata
+
+    # Handle simple JSON with 'text' field
+    if isinstance(data, dict) and 'text' in data:
+        return data['text'], metadata
+
+    # Handle simple JSON with 'content' field
+    if isinstance(data, dict) and 'content' in data:
+        return data['content'], metadata
+
+    # Fallback: convert entire JSON to string
+    return json.dumps(data, indent=2), metadata
+
+
 def extract_text_from_pages(file_path: str, max_pages: int, temp_dir: str) -> Tuple[str, Dict]:
     """
     Extract text from Apple Pages file (.pages).
@@ -577,6 +685,11 @@ def extract_text_from_file(file_path: Path, max_pages: int, temp_dir: Optional[s
             raise Exception("Cannot process .pages file without temp directory")
         return extract_text_from_pages(str(file_path), max_pages=max_pages, temp_dir=temp_dir)
 
+    if ext == '.json':
+        text, json_metadata = extract_text_from_json(str(file_path))
+        stats.update(json_metadata)
+        return text, stats
+
     if ext in ['.txt', '.md']:
         with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
             return f.read(), stats
@@ -665,7 +778,7 @@ def _embed_in_batches(texts: List[str], embed_batch_size: int, max_workers: int 
     return all_embeddings, total_tokens
 
 # --------------- File processor ---------------
-SUPPORTED_EXTS = {'.csv', '.doc', '.docx', '.epub', '.htm', '.html', '.md',
+SUPPORTED_EXTS = {'.csv', '.doc', '.docx', '.epub', '.htm', '.html', '.json', '.md',
                   '.odt', '.pages', '.pdf', '.ppt', '.pptx', '.rtf', '.txt', '.xls', '.xlsx'}
 
 def process_file(
