@@ -360,6 +360,107 @@ class GeminiService:
                     total += self._estimate_tokens(part.text)
         return total
 
+    def generate_rag_response_stream(
+        self,
+        query: str,
+        context_chunks: List[Dict[str, Any]],
+        system_prompt: Optional[str] = None,
+        temperature: float = 0.7,
+        max_tokens: Optional[int] = None,
+        conversation_history: Optional[List[Dict[str, str]]] = None
+    ):
+        """
+        Generate streaming response using RAG (Retrieval Augmented Generation)
+
+        Args:
+            query: User's question
+            context_chunks: List of relevant context chunks from vector search
+            system_prompt: Optional system prompt
+            temperature: Response randomness (0-1)
+            max_tokens: Maximum tokens in response
+            conversation_history: Optional list of previous Q&A pairs
+
+        Yields:
+            Dict chunks with 'type' and 'content' for SSE streaming
+        """
+        error = self._check_client()
+        if error:
+            yield {'type': 'error', 'content': error['error']}
+            return
+
+        try:
+            # Build context from chunks
+            context_text = self._build_context(context_chunks)
+
+            # Default system prompt with conversation awareness
+            if not system_prompt:
+                system_prompt = (
+                    "You are a helpful assistant engaged in a conversation with the user. "
+                    "Answer the user's question based on the provided context. "
+                    "IMPORTANT: You are having a conversation with the user. Pay attention to the conversation history provided. "
+                    "When the user asks follow-up questions or uses pronouns (it, that, they, etc.), "
+                    "refer back to the conversation history to understand what they're referring to. "
+                    "If the context doesn't contain relevant information, say so clearly. "
+                    "Be conversational and maintain continuity with previous exchanges."
+                )
+
+            # Build conversation contents for Gemini
+            contents = []
+
+            # Add conversation history if provided
+            if conversation_history:
+                for exchange in conversation_history[-5:]:  # Keep last 5 exchanges
+                    contents.append(Content(
+                        role="user",
+                        parts=[Part.from_text(exchange.get('query', ''))]
+                    ))
+                    contents.append(Content(
+                        role="model",
+                        parts=[Part.from_text(exchange.get('answer', ''))]
+                    ))
+
+            # Add current query with context
+            current_message = f"Context:\n{context_text}\n\nQuestion: {query}"
+            contents.append(Content(
+                role="user",
+                parts=[Part.from_text(current_message)]
+            ))
+
+            # Generate response using Gemini with streaming
+            generation_config = {
+                "temperature": temperature,
+                "max_output_tokens": max_tokens or self.max_tokens,
+            }
+
+            # Create model with system instruction
+            model_with_system = GenerativeModel(
+                self.chat_model_name,
+                system_instruction=system_prompt
+            )
+
+            # Stream the response
+            response = model_with_system.generate_content(
+                contents,
+                generation_config=generation_config,
+                stream=True
+            )
+
+            full_text = ""
+            for chunk in response:
+                if chunk.text:
+                    full_text += chunk.text
+                    yield {'type': 'delta', 'content': chunk.text}
+
+            # Send done message with metadata
+            yield {
+                'type': 'done',
+                'model': self.chat_model_name,
+                'context_chunks_used': len(context_chunks)
+            }
+
+        except Exception as e:
+            yield {'type': 'error', 'content': str(e)}
+
     def generate_chat_response(
         self,
         messages: List[Dict[str, str]],

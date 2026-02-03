@@ -3,11 +3,12 @@ RAG Routes
 Core endpoints for RAG (Retrieval Augmented Generation) functionality
 """
 
-from flask import Blueprint, request, jsonify, g, current_app
+from flask import Blueprint, request, jsonify, g, current_app, Response
 from services.pinecone_service import get_pinecone_service
 from services.gemini_service import get_gemini_service
 from services.bm25_service import get_bm25_service
 import time
+import json
 
 rag_bp = Blueprint("rag", __name__)
 
@@ -416,6 +417,142 @@ def query():
             'error': 'Internal server error',
             'details': str(e) if current_app.debug else None
         }), 500
+
+
+@rag_bp.route('/query/stream', methods=['POST', 'OPTIONS'])
+def query_stream():
+    """
+    Answer a question using RAG with SSE streaming response
+
+    Request body: Same as /query endpoint
+
+    Returns:
+        Server-Sent Events stream with:
+        - data: {"type": "delta", "content": "..."} for each chunk
+        - data: {"type": "done", "model": "...", ...} when complete
+        - data: {"type": "error", "content": "..."} on error
+    """
+    # Handle CORS preflight
+    if request.method == 'OPTIONS':
+        response = jsonify({'status': 'ok'})
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Methods', 'POST, OPTIONS')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type, X-Tenant-ID')
+        return response, 200
+
+    try:
+        data = request.get_json()
+
+        if not data or 'query' not in data:
+            return jsonify({
+                'success': False,
+                'error': 'Query is required'
+            }), 400
+
+        query_text = data['query']
+
+        # Get tenant's default RAG settings
+        rag_settings = g.tenant_config.get('rag_settings', {})
+
+        # Use request params or fall back to tenant defaults
+        top_k = data.get('top_k', rag_settings.get('top_k', 5))
+        temperature = data.get('temperature', rag_settings.get('temperature', 0.7))
+        max_tokens = data.get('max_tokens', rag_settings.get('max_tokens'))
+
+        # Hybrid search parameters
+        use_hybrid = data.get('use_hybrid', rag_settings.get('use_hybrid', True))
+        alpha = data.get('alpha', rag_settings.get('alpha', 0.7))
+        fusion_method = data.get('fusion_method', rag_settings.get('fusion_method', 'rrf'))
+
+        # Namespace boost parameter
+        tenant_namespace_boost = data.get('tenant_namespace_boost', rag_settings.get('tenant_namespace_boost', 1.25))
+
+        # Use request system_prompt or tenant default
+        system_prompt = data.get('system_prompt', g.tenant_config.get('system_prompt'))
+
+        # Generate embedding for query
+        embedding_result = gemini_service.create_embedding(query_text)
+
+        if not embedding_result['success']:
+            def error_stream():
+                yield f"data: {json.dumps({'type': 'error', 'content': 'Failed to create query embedding'})}\n\n"
+            return Response(error_stream(), mimetype='text/event-stream')
+
+        query_embedding = embedding_result['embedding']
+
+        # Search for relevant context
+        accessible_namespaces = g.tenant_config.get('accessible_namespaces', [g.tenant_config['pinecone_namespace']])
+
+        if use_hybrid:
+            if len(accessible_namespaces) > 1:
+                search_result = pinecone_service.hybrid_query_multiple_namespaces(
+                    namespaces=accessible_namespaces,
+                    query_vector=query_embedding,
+                    query_text=query_text,
+                    bm25_service=bm25_service,
+                    top_k=top_k,
+                    alpha=alpha,
+                    fusion_method=fusion_method,
+                    tenant_namespace_boost=tenant_namespace_boost
+                )
+            else:
+                search_result = pinecone_service.hybrid_query(
+                    tenant_namespace=accessible_namespaces[0],
+                    query_vector=query_embedding,
+                    query_text=query_text,
+                    bm25_service=bm25_service,
+                    top_k=top_k,
+                    alpha=alpha,
+                    fusion_method=fusion_method,
+                    include_metadata=True
+                )
+        else:
+            if len(accessible_namespaces) > 1:
+                search_result = pinecone_service.query_multiple_namespaces(
+                    namespaces=accessible_namespaces,
+                    query_vector=query_embedding,
+                    top_k=top_k,
+                    include_metadata=True,
+                    tenant_namespace_boost=tenant_namespace_boost
+                )
+            else:
+                search_result = pinecone_service.query_vectors(
+                    tenant_namespace=accessible_namespaces[0],
+                    query_vector=query_embedding,
+                    top_k=top_k,
+                    include_metadata=True
+                )
+
+        if not search_result['success']:
+            def error_stream():
+                yield f"data: {json.dumps({'type': 'error', 'content': 'Vector search failed'})}\n\n"
+            return Response(error_stream(), mimetype='text/event-stream')
+
+        # Get conversation history
+        conversation_history = data.get('conversation_history', [])
+
+        # Generate streaming response
+        def generate():
+            for chunk in gemini_service.generate_rag_response_stream(
+                query=query_text,
+                context_chunks=search_result['matches'],
+                system_prompt=system_prompt,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                conversation_history=conversation_history
+            ):
+                yield f"data: {json.dumps(chunk)}\n\n"
+
+        response = Response(generate(), mimetype='text/event-stream')
+        response.headers['Cache-Control'] = 'no-cache'
+        response.headers['X-Accel-Buffering'] = 'no'
+        response.headers['Access-Control-Allow-Origin'] = '*'
+        return response
+
+    except Exception as e:
+        def error_stream():
+            yield f"data: {json.dumps({'type': 'error', 'content': str(e)})}\n\n"
+        return Response(error_stream(), mimetype='text/event-stream')
 
 
 @rag_bp.route('/search', methods=['POST'])
