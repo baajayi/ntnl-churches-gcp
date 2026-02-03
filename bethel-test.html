@@ -3,246 +3,635 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bethel Lutheran Church - Widget Test</title>
+    <title>Bethel Lutheran Church - AI Assistant</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        :root {
+            --primary: #f5576c;
+            --primary-dark: #d4465a;
+            --primary-light: #ff7a8a;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f9fafb;
+            --bg-tertiary: #f3f4f6;
+            --bg-chat: #ffffff;
+            --text-primary: #111827;
+            --text-secondary: #6b7280;
+            --text-tertiary: #9ca3af;
+            --border: #e5e7eb;
+            --border-light: #f3f4f6;
+            --user-bubble: #f5576c;
+            --user-text: #ffffff;
+            --assistant-bubble: #f3f4f6;
+            --assistant-text: #111827;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --radius: 12px;
+            --radius-lg: 16px;
+            --radius-full: 9999px;
         }
+
+        [data-theme="dark"] {
+            --bg-primary: #111827;
+            --bg-secondary: #1f2937;
+            --bg-tertiary: #374151;
+            --bg-chat: #111827;
+            --text-primary: #f9fafb;
+            --text-secondary: #d1d5db;
+            --text-tertiary: #9ca3af;
+            --border: #374151;
+            --border-light: #1f2937;
+            --assistant-bubble: #1f2937;
+            --assistant-text: #f9fafb;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            min-height: 100vh;
-            padding: 20px;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
         }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        h1 {
-            color: white;
-            text-align: center;
-            margin-bottom: 30px;
-            font-size: 2.5rem;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-        }
-
-        .widget-section {
-            background: white;
-            border-radius: 12px;
-            padding: 30px;
-            margin-bottom: 30px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-        }
-
-        .widget-section h2 {
-            color: #f5576c;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 3px solid #f5576c;
-        }
-
-        .note {
-            background-color: #f8d7da;
-            border-left: 4px solid #721c24;
-            padding: 15px;
-            margin-bottom: 20px;
-            border-radius: 4px;
-            color: #721c24;
-        }
-
-        .chat-container {
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            padding: 20px;
-            margin-top: 20px;
-        }
-
-        .input-group {
+        .app-container {
             display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 900px;
+            margin: 0 auto;
+            background: var(--bg-chat);
         }
 
-        input[type="text"] {
-            flex: 1;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 14px;
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-primary);
+            flex-shrink: 0;
         }
 
-        button {
-            padding: 12px 24px;
-            background: #f5576c;
+        .header-left { display: flex; align-items: center; gap: 12px; }
+
+        .logo {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
             color: white;
-            border: none;
-            border-radius: 4px;
+            font-weight: 700;
+            font-size: 18px;
+        }
+
+        .header-title { display: flex; flex-direction: column; }
+        .header-title h1 { font-size: 16px; font-weight: 600; color: var(--text-primary); }
+        .header-title span { font-size: 12px; color: var(--text-tertiary); }
+
+        .header-actions { display: flex; align-items: center; gap: 8px; }
+
+        .btn-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            background: var(--bg-primary);
+            color: var(--text-secondary);
             cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s ease;
+        }
+
+        .btn-icon:hover { background: var(--bg-secondary); color: var(--text-primary); }
+        .btn-icon svg { width: 18px; height: 18px; }
+
+        .btn-new-chat {
+            padding: 8px 16px;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.15s ease;
+        }
+
+        .btn-new-chat:hover { background: var(--bg-secondary); }
+        .btn-new-chat svg { width: 16px; height: 16px; }
+
+        .messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+            scroll-behavior: smooth;
+        }
+
+        .messages-container::-webkit-scrollbar { width: 6px; }
+        .messages-container::-webkit-scrollbar-track { background: transparent; }
+        .messages-container::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        .welcome-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            text-align: center;
+            padding: 40px 20px;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .welcome-icon {
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 24px;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .welcome-icon svg { width: 32px; height: 32px; color: white; }
+        .welcome-screen h2 { font-size: 24px; font-weight: 600; margin-bottom: 8px; color: var(--text-primary); }
+        .welcome-screen p { font-size: 15px; color: var(--text-secondary); max-width: 400px; margin-bottom: 32px; }
+
+        .suggestions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; max-width: 600px; }
+
+        .suggestion {
+            padding: 10px 16px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-full);
+            font-size: 14px;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .suggestion:hover { background: var(--bg-tertiary); border-color: var(--primary); color: var(--primary); }
+
+        .message { display: flex; gap: 16px; margin-bottom: 24px; animation: messageIn 0.3s ease; }
+
+        @keyframes messageIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
             font-size: 14px;
             font-weight: 600;
-            transition: background 0.2s;
+            flex-shrink: 0;
         }
 
-        button:hover {
-            background: #d4465a;
+        .message.user .message-avatar { background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: white; }
+        .message.assistant .message-avatar { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); color: white; }
+
+        .message-content { flex: 1; min-width: 0; }
+        .message-header { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+        .message-sender { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+        .message-time { font-size: 12px; color: var(--text-tertiary); }
+        .message-bubble { font-size: 15px; line-height: 1.7; color: var(--text-primary); }
+
+        .message.user .message-bubble {
+            background: var(--user-bubble);
+            color: var(--user-text);
+            padding: 12px 16px;
+            border-radius: var(--radius-lg);
+            border-top-left-radius: 4px;
+            display: inline-block;
+            max-width: 85%;
         }
 
-        button:disabled {
-            background: #ccc;
-            cursor: not-allowed;
+        .message-bubble p { margin-bottom: 12px; }
+        .message-bubble p:last-child { margin-bottom: 0; }
+        .message-bubble strong { font-weight: 600; }
+        .message-bubble ul, .message-bubble ol { margin: 12px 0; padding-left: 24px; }
+        .message-bubble li { margin-bottom: 4px; }
+        .message-bubble blockquote { border-left: 3px solid var(--primary); padding-left: 16px; margin: 12px 0; color: var(--text-secondary); font-style: italic; }
+        .message-bubble a { color: var(--primary); text-decoration: none; }
+        .message-bubble a:hover { text-decoration: underline; }
+
+        .cursor {
+            display: inline-block;
+            width: 2px;
+            height: 18px;
+            background: var(--primary);
+            margin-left: 2px;
+            animation: cursorBlink 1s infinite;
+            vertical-align: text-bottom;
         }
 
-        .messages {
-            max-height: 500px;
-            overflow-y: auto;
-            margin-top: 20px;
-        }
+        @keyframes cursorBlink { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0; } }
 
-        .message {
-            margin-bottom: 15px;
-            padding: 12px;
-            border-radius: 8px;
-        }
+        .message-actions { display: flex; gap: 4px; margin-top: 8px; opacity: 0; transition: opacity 0.15s ease; }
+        .message:hover .message-actions { opacity: 1; }
 
-        .user-message {
-            background: #ffe0e6;
-            margin-left: 20%;
-        }
-
-        .assistant-message {
-            background: #f5f5f5;
-            margin-right: 20%;
-        }
-
-        .message-label {
-            font-weight: 600;
-            margin-bottom: 5px;
+        .action-btn {
+            padding: 6px 10px;
+            border: none;
+            background: transparent;
+            color: var(--text-tertiary);
             font-size: 12px;
-            color: #666;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            border-radius: 6px;
+            transition: all 0.15s ease;
         }
 
-        .loading {
-            text-align: center;
-            padding: 20px;
-            color: #666;
+        .action-btn:hover { background: var(--bg-secondary); color: var(--text-primary); }
+        .action-btn.copied { color: #10b981; }
+        .action-btn svg { width: 14px; height: 14px; }
+
+        .input-area {
+            padding: 16px 24px 24px;
+            background: var(--bg-primary);
+            border-top: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+
+        .input-container {
+            display: flex;
+            align-items: flex-end;
+            gap: 12px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 8px 8px 8px 16px;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .input-container:focus-within { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(245, 87, 108, 0.1); }
+        .input-wrapper { flex: 1; display: flex; align-items: center; }
+
+        #queryInput {
+            width: 100%;
+            border: none;
+            background: transparent;
+            font-size: 15px;
+            font-family: inherit;
+            color: var(--text-primary);
+            resize: none;
+            max-height: 150px;
+            line-height: 1.5;
+            padding: 8px 0;
+        }
+
+        #queryInput::placeholder { color: var(--text-tertiary); }
+        #queryInput:focus { outline: none; }
+
+        .btn-send {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius);
+            border: none;
+            background: var(--primary);
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s ease;
+            flex-shrink: 0;
+        }
+
+        .btn-send:hover:not(:disabled) { background: var(--primary-dark); }
+        .btn-send:disabled { background: var(--bg-tertiary); color: var(--text-tertiary); cursor: not-allowed; }
+        .btn-send svg { width: 18px; height: 18px; }
+
+        .input-hint { text-align: center; padding-top: 12px; font-size: 12px; color: var(--text-tertiary); }
+
+        @media (max-width: 768px) {
+            .header { padding: 12px 16px; }
+            .header-title h1 { font-size: 14px; }
+            .btn-new-chat span { display: none; }
+            .messages-container { padding: 16px; }
+            .input-area { padding: 12px 16px 16px; }
+            .message { gap: 12px; }
+            .message-avatar { width: 28px; height: 28px; font-size: 12px; }
+            .suggestions { flex-direction: column; }
+            .suggestion { text-align: center; }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>✝️ Bethel Lutheran Church - AI Assistant Test</h1>
-
-        <div class="widget-section">
-            <h2>Chat Widget Test</h2>
-            <div class="note">
-                Test the Bethel Lutheran AI assistant below. This chat interface connects to the /rag-query endpoint with the 'bethel' tenant ID.
-            </div>
-
-            <div class="chat-container">
-                <div class="input-group">
-                    <input
-                        type="text"
-                        id="queryInput"
-                        placeholder="Ask a question about Lutheran theology, ELCA values, or scripture..."
-                        onkeypress="if(event.key === 'Enter') sendQuery()"
-                    />
-                    <button onclick="sendQuery()" id="sendBtn">Send</button>
+    <div class="app-container">
+        <header class="header">
+            <div class="header-left">
+                <div class="logo">B</div>
+                <div class="header-title">
+                    <h1>Bethel Lutheran Church</h1>
+                    <span>AI Assistant</span>
                 </div>
-
-                <div id="messages" class="messages"></div>
             </div>
+            <div class="header-actions">
+                <button class="btn-icon" onclick="toggleTheme()" title="Toggle theme">
+                    <svg id="themeIcon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                    </svg>
+                </button>
+                <button class="btn-new-chat" onclick="resetConversation()">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                    <span>New Chat</span>
+                </button>
+            </div>
+        </header>
+
+        <div class="messages-container" id="messagesContainer">
+            <div class="welcome-screen" id="welcomeScreen">
+                <div class="welcome-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                    </svg>
+                </div>
+                <h2>Welcome to Bethel Lutheran</h2>
+                <p>I'm here to help answer your questions about our church, sermons, Lutheran theology, and ELCA values.</p>
+                <div class="suggestions">
+                    <button class="suggestion" onclick="askQuestion('What do Lutherans believe about baptism?')">Lutheran baptism</button>
+                    <button class="suggestion" onclick="askQuestion('Tell me about ELCA social teachings')">ELCA teachings</button>
+                    <button class="suggestion" onclick="askQuestion('What does the Bible say about forgiveness?')">Biblical forgiveness</button>
+                    <button class="suggestion" onclick="askQuestion('What ministries does Bethel offer?')">Bethel ministries</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="input-area">
+            <div class="input-container">
+                <div class="input-wrapper">
+                    <textarea id="queryInput" placeholder="Ask anything about Bethel Lutheran..." rows="1"></textarea>
+                </div>
+                <button class="btn-send" onclick="sendQuery()" id="sendBtn">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                    </svg>
+                </button>
+            </div>
+            <div class="input-hint">Press Enter to send, Shift + Enter for new line</div>
         </div>
     </div>
 
     <script>
-        let conversationHistory = [];
-        const API_URL = window.location.origin + '/rag-query';
+        let lastResponseId = null;
+        const API_URL = window.location.origin + '/query/stream';
         const TENANT_ID = 'bethel';
+
+        function toggleTheme() {
+            const html = document.documentElement;
+            const newTheme = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeIcon(newTheme);
+        }
+
+        function updateThemeIcon(theme) {
+            const icon = document.getElementById('themeIcon');
+            icon.innerHTML = theme === 'dark'
+                ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />'
+                : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />';
+        }
+
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        updateThemeIcon(savedTheme);
+
+        marked.setOptions({ breaks: true, gfm: true, headerIds: false, mangle: false });
+
+        const textarea = document.getElementById('queryInput');
+        textarea.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 150) + 'px';
+        });
+
+        textarea.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendQuery(); }
+        });
+
+        function hideWelcome() {
+            const welcome = document.getElementById('welcomeScreen');
+            if (welcome) welcome.style.display = 'none';
+        }
+
+        function askQuestion(question) {
+            document.getElementById('queryInput').value = question;
+            sendQuery();
+        }
+
+        function getCurrentTime() {
+            return new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+        }
 
         async function sendQuery() {
             const input = document.getElementById('queryInput');
-            const messagesDiv = document.getElementById('messages');
+            const container = document.getElementById('messagesContainer');
             const sendBtn = document.getElementById('sendBtn');
             const query = input.value.trim();
 
             if (!query) return;
 
-            // Disable input
+            hideWelcome();
             sendBtn.disabled = true;
             input.disabled = true;
 
-            // Add user message to UI
-            appendMessage('user', query);
+            container.appendChild(createMessage('user', query));
             input.value = '';
+            input.style.height = 'auto';
 
-            // Show loading
-            const loadingId = 'loading-' + Date.now();
-            messagesDiv.innerHTML += `<div id="${loadingId}" class="loading">Thinking...</div>`;
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            const messageId = 'msg-' + Date.now();
+            container.appendChild(createAssistantMessage(messageId));
+            container.scrollTop = container.scrollHeight;
+
+            let fullContent = '';
 
             try {
+                const requestBody = { query };
+                if (lastResponseId) requestBody.previous_response_id = lastResponseId;
+
                 const response = await fetch(API_URL, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Tenant-ID': TENANT_ID
-                    },
-                    body: JSON.stringify({
-                        query: query,
-                        conversation_history: conversationHistory
-                    })
+                    headers: { 'Content-Type': 'application/json', 'X-Tenant-ID': TENANT_ID },
+                    body: JSON.stringify(requestBody)
                 });
 
-                const data = await response.json();
+                if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
 
-                // Remove loading
-                document.getElementById(loadingId)?.remove();
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
 
-                if (data.success && data.answer) {
-                    const answer = data.answer;
-                    appendMessage('assistant', answer);
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
 
-                    // Update conversation history
-                    conversationHistory.push({role: 'user', content: query});
-                    conversationHistory.push({role: 'assistant', content: answer});
-                } else {
-                    appendMessage('assistant', 'Sorry, I encountered an error: ' + (data.error || 'Unknown error'));
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop() || '';
+
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            try {
+                                const data = JSON.parse(line.slice(6));
+                                if (data.type === 'delta') {
+                                    fullContent += data.content;
+                                    updateStreamingMessage(messageId, fullContent);
+                                } else if (data.type === 'done') {
+                                    if (data.response_id) lastResponseId = data.response_id;
+                                    finalizeMessage(messageId, fullContent);
+                                } else if (data.type === 'error') {
+                                    fullContent = 'I apologize, but I encountered an error. Please try again.';
+                                    finalizeMessage(messageId, fullContent);
+                                }
+                            } catch (e) { console.error('Parse error:', e); }
+                        }
+                    }
+                    container.scrollTop = container.scrollHeight;
                 }
+
+                if (fullContent) finalizeMessage(messageId, fullContent);
+
             } catch (error) {
-                document.getElementById(loadingId)?.remove();
-                appendMessage('assistant', 'Sorry, I encountered a network error: ' + error.message);
+                console.error('Stream error:', error);
+                const bubble = document.getElementById(`bubble-${messageId}`);
+                if (bubble) bubble.innerHTML = 'I apologize, but I encountered a connection error. Please try again.';
             }
 
-            // Re-enable input
             sendBtn.disabled = false;
             input.disabled = false;
             input.focus();
         }
 
-        function appendMessage(role, content) {
-            const messagesDiv = document.getElementById('messages');
-            const messageDiv = document.createElement('div');
-            messageDiv.className = 'message ' + (role === 'user' ? 'user-message' : 'assistant-message');
-
-            const label = document.createElement('div');
-            label.className = 'message-label';
-            label.textContent = role === 'user' ? 'You' : 'Bethel Assistant';
-
-            const text = document.createElement('div');
-            text.textContent = content;
-
-            messageDiv.appendChild(label);
-            messageDiv.appendChild(text);
-            messagesDiv.appendChild(messageDiv);
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        function createMessage(role, content) {
+            const div = document.createElement('div');
+            div.className = `message ${role}`;
+            const avatar = role === 'user' ? 'U' : 'B';
+            const sender = role === 'user' ? 'You' : 'Bethel Assistant';
+            div.innerHTML = `
+                <div class="message-avatar">${avatar}</div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="message-sender">${sender}</span>
+                        <span class="message-time">${getCurrentTime()}</span>
+                    </div>
+                    <div class="message-bubble">${role === 'user' ? escapeHtml(content) : content}</div>
+                </div>
+            `;
+            return div;
         }
 
-        // Focus input on load
+        function createAssistantMessage(messageId) {
+            const div = document.createElement('div');
+            div.className = 'message assistant';
+            div.id = messageId;
+            div.innerHTML = `
+                <div class="message-avatar">B</div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="message-sender">Bethel Assistant</span>
+                        <span class="message-time">${getCurrentTime()}</span>
+                    </div>
+                    <div class="message-bubble" id="bubble-${messageId}"><span class="cursor"></span></div>
+                </div>
+            `;
+            return div;
+        }
+
+        function updateStreamingMessage(messageId, content) {
+            const bubble = document.getElementById(`bubble-${messageId}`);
+            if (bubble) bubble.innerHTML = marked.parse(content) + '<span class="cursor"></span>';
+        }
+
+        function finalizeMessage(messageId, content) {
+            const bubble = document.getElementById(`bubble-${messageId}`);
+            if (bubble) {
+                bubble.innerHTML = marked.parse(content);
+                bubble.querySelectorAll('a').forEach(link => {
+                    link.setAttribute('target', '_blank');
+                    link.setAttribute('rel', 'noopener noreferrer');
+                });
+                const msgContent = bubble.parentElement;
+                if (!msgContent.querySelector('.message-actions')) {
+                    const actions = document.createElement('div');
+                    actions.className = 'message-actions';
+                    actions.innerHTML = `
+                        <button class="action-btn" onclick="copyMessage(this, \`${escapeForJs(content)}\`)">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                            Copy
+                        </button>
+                    `;
+                    msgContent.appendChild(actions);
+                }
+            }
+        }
+
+        function copyMessage(btn, content) {
+            navigator.clipboard.writeText(content).then(() => {
+                btn.classList.add('copied');
+                btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg> Copied!`;
+                setTimeout(() => {
+                    btn.classList.remove('copied');
+                    btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg> Copy`;
+                }, 2000);
+            });
+        }
+
+        function escapeHtml(text) { const div = document.createElement('div'); div.textContent = text; return div.innerHTML; }
+        function escapeForJs(str) { return str.replace(/`/g, '\\`').replace(/\$/g, '\\$'); }
+
+        function resetConversation() {
+            lastResponseId = null;
+            document.getElementById('messagesContainer').innerHTML = `
+                <div class="welcome-screen" id="welcomeScreen">
+                    <div class="welcome-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                        </svg>
+                    </div>
+                    <h2>Welcome to Bethel Lutheran</h2>
+                    <p>I'm here to help answer your questions about our church, sermons, Lutheran theology, and ELCA values.</p>
+                    <div class="suggestions">
+                        <button class="suggestion" onclick="askQuestion('What do Lutherans believe about baptism?')">Lutheran baptism</button>
+                        <button class="suggestion" onclick="askQuestion('Tell me about ELCA social teachings')">ELCA teachings</button>
+                        <button class="suggestion" onclick="askQuestion('What does the Bible say about forgiveness?')">Biblical forgiveness</button>
+                        <button class="suggestion" onclick="askQuestion('What ministries does Bethel offer?')">Bethel ministries</button>
+                    </div>
+                </div>
+            `;
+            document.getElementById('queryInput').focus();
+        }
+
         document.getElementById('queryInput').focus();
     </script>
 </body>

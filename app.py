@@ -1368,6 +1368,21 @@ def covenant_test():
     """Serve Covenant Lutheran widget test page"""
     return send_from_directory('.', 'covenant-test.html')
 
+@app.route('/preston-meadow-test.html')
+def preston_meadow_test():
+    """Serve Preston Meadow Lutheran widget test page"""
+    return send_from_directory('.', 'preston-meadow-test.html')
+
+@app.route('/mesquite-test.html')
+def mesquite_test():
+    """Serve Our Saviour Mesquite Lutheran widget test page"""
+    return send_from_directory('.', 'mesquite-test.html')
+
+@app.route('/messiah-weatherford-test.html')
+def messiah_weatherford_test():
+    """Serve Messiah Weatherford Lutheran widget test page"""
+    return send_from_directory('.', 'messiah-weatherford-test.html')
+
 
 # Register blueprints
 app.register_blueprint(rag_bp)
