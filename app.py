@@ -1092,7 +1092,7 @@ def extract_tenant_from_subdomain(host):
     # Remove port if present
     host = host.split(':')[0]
 
-    # Skip extraction for deployment URLs (AWS EB, Heroku, etc.)
+    # Skip extraction for deployment URLs (AWS EB, Heroku, Cloud Run, etc.)
     # These are not tenant subdomains
     if (
         'elasticbeanstalk.com' in host or
@@ -1103,7 +1103,9 @@ def extract_tenant_from_subdomain(host):
         # Also matches ec2-35-169-133-49 (when port is already removed)
         host.startswith('ec2-') or
         'compute-' in host or
-        '.amazonaws.com' in host
+        '.amazonaws.com' in host or
+        # Cloud Run URLs like ntnl-churches-414148512983.us-central1.run.app
+        '.run.app' in host
     ):
         return None
 
