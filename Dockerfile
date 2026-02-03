@@ -53,4 +53,4 @@ CMD exec gunicorn --bind :$PORT \
     --worker-class gthread \
     --access-logfile - \
     --error-logfile - \
-    application:application
+    app:application
