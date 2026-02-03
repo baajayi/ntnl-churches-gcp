@@ -1120,10 +1120,18 @@ def extract_tenant_from_subdomain(host):
 
 def extract_tenant_from_path(path):
     """Extract tenant ID from URL path"""
+    # Known API routes that should NOT be treated as tenant prefixes
+    api_routes = ['query', 'rag-query', 'search', 'ingest', 'stats', 'logs',
+                  'health', 'admin', 'static', 'debug', 'favicon.ico']
+
     # Pattern: /tenant1/query -> tenant1
     match = re.match(r'^/([a-zA-Z0-9_-]+)/', path)
     if match:
-        return match.group(1)
+        potential_tenant = match.group(1)
+        # Don't treat API route prefixes as tenant IDs
+        if potential_tenant in api_routes:
+            return None
+        return potential_tenant
     return None
 
 
