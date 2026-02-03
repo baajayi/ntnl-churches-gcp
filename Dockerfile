@@ -27,6 +27,9 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 # Copy NLTK data from builder
 COPY --from=builder /usr/local/share/nltk_data /usr/local/share/nltk_data
 
+# Cache-bust for application code changes
+ARG CACHEBUST=1
+
 # Copy application code
 COPY . .
 
