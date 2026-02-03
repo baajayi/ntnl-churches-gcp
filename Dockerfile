@@ -47,9 +47,9 @@ EXPOSE 8080
 # - 120s timeout for long-running RAG queries
 # - Access and error logs to stdout (Cloud Logging integration)
 CMD exec gunicorn --bind :$PORT \
-    --workers 2 \
-    --threads 4 \
-    --timeout 120 \
+    --workers 1 \
+    --threads 8 \
+    --timeout 300 \
     --worker-class gthread \
     --access-logfile - \
     --error-logfile - \
