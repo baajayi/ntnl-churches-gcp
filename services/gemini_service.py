@@ -219,6 +219,12 @@ class GeminiService:
             # Build context from chunks
             context_text = self._build_context(context_chunks)
 
+            # Build conversation context string for template substitution
+            conversation_context_text = ""
+            if conversation_history:
+                for exchange in conversation_history[-5:]:
+                    conversation_context_text += f"User: {exchange.get('query', '')}\nAssistant: {exchange.get('answer', '')}\n\n"
+
             # Default system prompt with conversation awareness
             if not system_prompt:
                 system_prompt = (
@@ -230,6 +236,10 @@ class GeminiService:
                     "If the context doesn't contain relevant information, say so clearly. "
                     "Be conversational and maintain continuity with previous exchanges."
                 )
+
+            # Fill in template placeholders if present in system prompt
+            system_prompt = system_prompt.replace('{context}', context_text)
+            system_prompt = system_prompt.replace('{conversation_context}', conversation_context_text)
 
             # Build conversation contents for Gemini
             contents = []
@@ -249,7 +259,7 @@ class GeminiService:
                     ))
 
             # Add current query with context
-            current_message = f"Context:\n{context_text}\n\nQuestion: {query}"
+            current_message = f"Question: {query}"
             contents.append(Content(
                 role="user",
                 parts=[Part.from_text(current_message)]
@@ -392,6 +402,12 @@ class GeminiService:
             # Build context from chunks
             context_text = self._build_context(context_chunks)
 
+            # Build conversation context string for template substitution
+            conversation_context_text = ""
+            if conversation_history:
+                for exchange in conversation_history[-5:]:
+                    conversation_context_text += f"User: {exchange.get('query', '')}\nAssistant: {exchange.get('answer', '')}\n\n"
+
             # Default system prompt with conversation awareness
             if not system_prompt:
                 system_prompt = (
@@ -403,6 +419,10 @@ class GeminiService:
                     "If the context doesn't contain relevant information, say so clearly. "
                     "Be conversational and maintain continuity with previous exchanges."
                 )
+
+            # Fill in template placeholders if present in system prompt
+            system_prompt = system_prompt.replace('{context}', context_text)
+            system_prompt = system_prompt.replace('{conversation_context}', conversation_context_text)
 
             # Build conversation contents for Gemini
             contents = []
@@ -420,7 +440,7 @@ class GeminiService:
                     ))
 
             # Add current query with context
-            current_message = f"Context:\n{context_text}\n\nQuestion: {query}"
+            current_message = f"Question: {query}"
             contents.append(Content(
                 role="user",
                 parts=[Part.from_text(current_message)]
