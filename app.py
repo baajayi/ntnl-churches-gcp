@@ -47,7 +47,7 @@ TENANT_CONFIG = {
     'advent': {
         'name': 'Advent Lutheran Church',
         'pinecone_namespace': 'advent',
-        'accessible_namespaces': ['advent'],  # Only own namespace
+        'accessible_namespaces': ['advent', 'shared'],  # Only own namespace
         'rate_limit': 100,
         'enabled': True,
         'system_prompt': (
@@ -122,7 +122,7 @@ TENANT_CONFIG = {
     'bethel': {
         'name': 'Bethel Lutheran Church',
         'pinecone_namespace': 'bethel',
-        'accessible_namespaces': ['bethel'],  # Only own namespace
+        'accessible_namespaces': ['bethel', 'shared'],  # Only own namespace
         'rate_limit': 100,
         'enabled': True,
         'system_prompt': (
@@ -197,7 +197,7 @@ TENANT_CONFIG = {
     'preston-meadow': {
         'name': 'Preston Meadow Lutheran Church',
         'pinecone_namespace': 'preston',
-        'accessible_namespaces': ['preston'],  # Only own namespace
+        'accessible_namespaces': ['preston', 'shared'],  # Only own namespace
         'rate_limit': 100,
         'enabled': True,
         'system_prompt': (
@@ -262,7 +262,7 @@ TENANT_CONFIG = {
     'mesquite': {
         'name': 'Our Saviour Mesquite Lutheran Church',
         'pinecone_namespace': 'mesquite',
-        'accessible_namespaces': ['mesquite'],  # Only own namespace
+        'accessible_namespaces': ['mesquite', 'shared'],  # Only own namespace
         'rate_limit': 100,
         'enabled': True,
         'system_prompt': (
@@ -327,7 +327,7 @@ TENANT_CONFIG = {
     'messiah-weatherford': {
         'name': 'Messiah Lutheran Church Weatherford',
         'pinecone_namespace': 'messiah',
-        'accessible_namespaces': ['messiah'],  # Only own namespace
+        'accessible_namespaces': ['messiah', 'shared'],  # Only own namespace
         'rate_limit': 100,
         'enabled': True,
         'system_prompt': (
