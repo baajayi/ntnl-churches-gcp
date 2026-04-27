@@ -98,9 +98,10 @@ class BM25Service:
                 self.s3_bucket = None
 
         # Auto-load existing indices on initialization
-        # DISABLED: Auto-loading can cause WSL crashes due to S3 API timeouts at startup
-        # Indices will be loaded on-demand when first accessed instead
-        # self._auto_load_indices()
+        # Disabled locally: S3 API timeouts can crash WSL on startup
+        # On Cloud Run (K_SERVICE is set), auto-load is safe and required
+        if os.getenv('K_SERVICE'):
+            self._auto_load_indices()
 
     def _preprocess(self, text: str) -> str:
         """
